@@ -2,6 +2,7 @@ module Mud
   module Commands
     class CommandNotImplementedError < RuntimeError; end
     class Command
+      attr_accessor :name
       def initialize name, aliases
         @name = name 
         @aliases = [name] + aliases

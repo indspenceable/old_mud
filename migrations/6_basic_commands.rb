@@ -1,5 +1,26 @@
 module Mud
   module Commands
+    #Say = Command.spawn(["say"],[:string]) do |player, text|
+    #  player.room.echo "#{player.name} says: \"#{text}\"", [player]
+    #  player.hear_line "You say: \"#{text}\""
+    #end
+    #Help = Command.spawn(["help",'h','?'],[]) do |player|
+    class Help < Command
+      def initialize
+        super("help",["h","?"])
+      end
+      def enact player, args
+        player.hear_line 'Help System', :blue 
+        player.hear_line "You have access to the following commands:"
+        GlobalCommands.each do |c|
+          player.hear_line "\t#{c}", :red
+        end
+      end
+    end
+    GlobalCommands << Help.new
+
+
+
     class Say < Command
       def initialize
         #Say has a special case
@@ -11,6 +32,8 @@ module Mud
       end
     end
     GlobalCommands << Say.new
+
+
     class Look < Command
       def initialize
         super("look",["l"])
@@ -23,6 +46,7 @@ module Mud
       end
     end
     GlobalCommands << Look.new
+
     class Save < Command
       def initialize
         super("save", [])
@@ -33,6 +57,8 @@ module Mud
       end
     end
     GlobalCommands << Save.new
+
+
     class Quit < Command
       def initialize
         super("quit",["qq"])

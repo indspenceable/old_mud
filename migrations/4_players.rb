@@ -67,6 +67,7 @@ module Mud
     # as the result of something else (like, moving invokes player.command "look")
     def command data, from_input=false
       command_name,args = data.split(' ', 2)
+      #we probably want to have a "find command" method
       com = Commands::find_command(command_name)
       if com 
         com.enact(self, args)
