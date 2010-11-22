@@ -14,7 +14,7 @@ module Mud
       end
       #put each file name in the migration hash.
       migrations.each do |m|
-        @migration_hash[(/\A(\d)_(.*)\z/.match m)[1].to_i] = m
+        @migration_hash[(/\A(\d*)_(.*)\z/.match m)[1].to_i] = m
       end
 
       while @migration_hash.key?(@migration_index + 1)
