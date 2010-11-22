@@ -1,6 +1,5 @@
 module Mud
   module Commands
-    Help = Command.spawn(["help",'h','?'],[]) do |player|
     class Help < Command
       def initialize
         super("help",["h","?"])
@@ -14,7 +13,7 @@ module Mud
       end
     end
     GlobalCommands << Help.new
-    
+
     class Migrate < Command
       def initialize
         super('migrate',[])

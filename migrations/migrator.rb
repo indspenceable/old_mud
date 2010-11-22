@@ -18,7 +18,6 @@ module Mud
       end
 
       while @migration_hash.key?(@migration_index + 1)
-        puts "current index is #{@migration_index + 1}"
         require File.join(directory, @migration_hash[@migration_index += 1])
         puts "Loaded migration ##{@migration_index}"
       end
