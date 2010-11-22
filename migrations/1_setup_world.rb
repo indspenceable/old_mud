@@ -3,8 +3,7 @@
 # with a list of active players
 
 require 'singleton'
-# require 'YAML'
-require 'JSON'
+require 'yaml'
 
 module Mud
   # The world has all the global data about the game - a master list of 
@@ -36,7 +35,7 @@ module Mud
         load_from = entries[0]
         # yml = W.load_state(YAML.parse_file load_from)
         puts "HI"
-        yml = JSON.load_file(File.join(directory,load_from))
+        yml = YAML.load_file(File.join(directory,load_from))
         puts "YAML IS : # {yml}"
         @master_players, @rooms, @default_room = yml
         @rooms.each { |r| r.players.clear }

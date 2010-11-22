@@ -1,10 +1,6 @@
 module Mud
   module Commands
-    #Say = Command.spawn(["say"],[:string]) do |player, text|
-    #  player.room.echo "#{player.name} says: \"#{text}\"", [player]
-    #  player.hear_line "You say: \"#{text}\""
-    #end
-    #Help = Command.spawn(["help",'h','?'],[]) do |player|
+    Help = Command.spawn(["help",'h','?'],[]) do |player|
     class Help < Command
       def initialize
         super("help",["h","?"])
@@ -13,13 +9,23 @@ module Mud
         player.hear_line 'Help System', :blue 
         player.hear_line "You have access to the following commands:"
         GlobalCommands.each do |c|
-          player.hear_line "\t#{c}", :red
+          player.hear_line "\t#{c.name}", :red
         end
       end
     end
     GlobalCommands << Help.new
-
-
+    
+    class Migrate < Command
+      def initialize
+        super('migrate',[])
+      end
+      def enact player, args
+        player.hear_line "Migration starting..."
+        Migrator.migrate
+        player.hear_line "Migration completed."
+      end
+    end
+    GlobalCommands << Migrate.new
 
     class Say < Command
       def initialize
