@@ -15,6 +15,7 @@ module Mud
     attr_accessor :default_room
 
     def initialize 
+      
       @master_players = []
       @players = []
       @rooms = []
@@ -34,16 +35,15 @@ module Mud
         entries.reject!{|en| (en=~/\A\d{4}_\d{2}_\d{2}_\d{2}_\d{2}\.yaml\z/).nil?}
         load_from = entries[0]
         # yml = W.load_state(YAML.parse_file load_from)
-        puts "HI"
         yml = YAML.load_file(File.join(directory,load_from))
-        puts "YAML IS : # {yml}"
+        raise "bah!" unless yml
         @master_players, @rooms, @default_room = yml
         @rooms.each { |r| r.players.clear }
-
-        puts "HI"
       rescue Object => e
         puts 'There was an error wtih loading'
+        puts "************************************************"
         puts e.backtrace
+        puts "************************************************"
         puts 'running the scaffolding script instead.'
         Migrator.script('scaffold.rb')
       end
@@ -51,7 +51,7 @@ module Mud
     # Save the state. This saves data in the same format the load_state reads. TODO - Make it not save the connections
     def dump_state
       f = File.new(File.join(File.dirname(File.expand_path(__FILE__)),"..","saves","#{Time.now.strftime("%Y_%m_%d_%H_%M")}.yaml"),"w")
-      f << JSON.dump([@master_players, @rooms, @default_room])
+      f << YAML.dump([@master_players, @rooms, @default_room])
     end
 
     # determine if a name is valid. This just checks the rexegp
