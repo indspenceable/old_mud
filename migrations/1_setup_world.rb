@@ -39,6 +39,7 @@ module Mud
         raise "bah!" unless yml
         @master_players, @rooms, @default_room = yml
         @rooms.each { |r| r.players.clear }
+        @master_players.each { |p| p.clear_output }
       rescue Object => e
         puts 'There was an error wtih loading'
         puts "************************************************"

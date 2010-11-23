@@ -96,5 +96,9 @@ module Mud
         @pending_output = ""
       end
     end
+
+    def clear_output
+      @pending_output = "" 
+    end
   end
 end

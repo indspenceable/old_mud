@@ -90,10 +90,20 @@ module Mud
     def enter_password data
       if Digest::MD5.hexdigest(data) == @player.hashed_password
         @connection.send_line login_message
-        @player.hear_line "You've been logged in from another location"
-        @player.connection.delegate = Login.new(@player.connection)
-        @player.connection = @connection
-        @connection.delegate = @player
+
+        #is the player already logged in?
+        if W.players.include? @player
+          @player.hear_line "You've been logged in from another location"
+          @player.flush_output
+          @player.connection.delegate = Login.new(@player.connection)
+          @player.connection = @connection
+          @connection.delegate = @player
+        else
+          @player.room.players << @player
+          W.players << @player
+          @player.connection = @connection
+          @connection.delegate = @player
+        end
       else
         @connection.send_line "Incorrect password"
         initialize
