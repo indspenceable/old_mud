@@ -1,6 +1,7 @@
 module Mud
   class Player
     attr_accessor :room, :name, :connection, :hashed_password
+
     # create a new player. This should ONLY be called when a player is CREATED, not logged in.
     def initialize name,hashed_password
       @name = name
@@ -87,6 +88,7 @@ module Mud
       "> "
     end
 
+    #this allows simultanious output to be batched together in the same package.
     def flush_output
       if @pending_output != ""
         @pending_output += prompt

@@ -1,5 +1,7 @@
 module Mud
   module Commands
+
+    #Generate a list of commands that this player can do.
     class Help < Command
       def initialize
         super("help",["h","?"])
@@ -14,6 +16,7 @@ module Mud
     end
     GlobalCommands << Help.new
 
+    # Run the migrations on the server. This is an admin command.
     class Migrate < Command
       def initialize
         super('migrate',[])
@@ -26,6 +29,7 @@ module Mud
     end
     GlobalCommands << Migrate.new
 
+    #echo a string to the players room
     class Say < Command
       def initialize
         #Say has a special case
@@ -38,7 +42,7 @@ module Mud
     end
     GlobalCommands << Say.new
 
-
+    #look at the current room
     class Look < Command
       def initialize
         super("look",["l"])
@@ -52,6 +56,7 @@ module Mud
     end
     GlobalCommands << Look.new
 
+    #save the gamestate. This is an admin command
     class Save < Command
       def initialize
         super("save", [])
