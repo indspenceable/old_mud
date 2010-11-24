@@ -16,4 +16,8 @@ EventMachine::run do
       p.flush_output
     end
   end
+  EventMachine::PeriodicTimer.new(20) do
+    puts "Hello, world."
+    Mud::W.dump_state
+  end
 end

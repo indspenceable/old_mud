@@ -3,7 +3,7 @@
 # with a list of active players
 
 require 'singleton'
-require 'yaml'
+require 'JSON'
 
 module Mud
   # The world has all the global data about the game - a master list of 
@@ -35,7 +35,7 @@ module Mud
         entries.reject!{|en| (en=~/\A\d{4}_\d{2}_\d{2}_\d{2}_\d{2}\.yaml\z/).nil?}
         load_from = entries[0]
         # yml = W.load_state(YAML.parse_file load_from)
-        yml = YAML.load_file(File.join(directory,load_from))
+        yml = JSON.load_file(File.join(directory,load_from))
         raise "bah!" unless yml
         @master_players, @rooms, @default_room = yml
         @rooms.each { |r| r.players.clear }
@@ -52,7 +52,7 @@ module Mud
     # Save the state. This saves data in the same format the load_state reads. TODO - Make it not save the connections
     def dump_state
       f = File.new(File.join(File.dirname(File.expand_path(__FILE__)),"..","saves","#{Time.now.strftime("%Y_%m_%d_%H_%M")}.yaml"),"w")
-      f << YAML.dump([@master_players, @rooms, @default_room])
+      f << JSON.dump([@master_players, @rooms, @default_room])
     end
 
     # determine if a name is valid. This just checks the rexegp

@@ -1,6 +1,5 @@
 module Mud
   module Commands
-
     #Generate a list of commands that this player can do.
     class Help < Command
       def initialize
@@ -9,12 +8,14 @@ module Mud
       def enact player, args
         player.hear_line 'Help System', :blue 
         player.hear_line "You have access to the following commands:"
-        GlobalCommands.each do |c|
-          player.hear_line "\t#{c.name}", :red
+        ([:global] + player.command_groups).each do |l|
+          CommandList[l].each do |c|
+            player.hear_line "\t#{c.name}", :red
+          end
         end
       end
     end
-    GlobalCommands << Help.new
+    CommandList[:global] << Help.new
 
     # Run the migrations on the server. This is an admin command.
     class Migrate < Command
@@ -27,7 +28,7 @@ module Mud
         player.hear_line "Migration completed."
       end
     end
-    GlobalCommands << Migrate.new
+    CommandList[:admin] << Migrate.new
 
     #echo a string to the players room
     class Say < Command
@@ -40,7 +41,7 @@ module Mud
         player.hear_line "You say: \"#{args}\""
       end
     end
-    GlobalCommands << Say.new
+    CommandList[:global] << Say.new
 
     #look at the current room
     class Look < Command
@@ -54,7 +55,7 @@ module Mud
         player.hear_line player.room.exits_string, :yellow
       end
     end
-    GlobalCommands << Look.new
+    CommandList[:global] << Look.new
 
     #save the gamestate. This is an admin command
     class Save < Command
@@ -66,7 +67,7 @@ module Mud
         W.dump_state
       end
     end
-    GlobalCommands << Save.new
+    CommandList[:admin] << Save.new
 
 
     class Quit < Command
@@ -77,7 +78,7 @@ module Mud
         player.connection.close_connection
       end
     end
-    GlobalCommands << Quit.new
+    CommandList[:global] << Quit.new
 
 
     class Shutdown < Command
@@ -88,6 +89,6 @@ module Mud
         EventMachine::stop_event_loop
       end
     end
-    GlobalCommands << Shutdown.new
+    CommandList[:admin] << Shutdown.new
   end
 end

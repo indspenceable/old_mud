@@ -22,14 +22,18 @@ module Mud
       ## this is where other helper methods might go, for parsing arguments and such
     end
 
-    # The list of all the commands that anyone can do. I think this is going to go away...
-    # maybe I'll replace it with a hash from a symbol to a command list, and everyone has 
-    # list of lists that they can access commands from.
-    GlobalCommands = []
+    # this is a hash of command lists.
+    CommandList = Hash.new { |hash, key| hash[key] = [] }
 
     #look through the command list for a command named n and return it.
-    def self.find_command n
-      GlobalCommands.find { |c| c.named? n }
+    def self.find_command n, lists = []
+      lists = [:global] + lists
+      lists.map{ |sym| CommandList[sym] }.find do |l|
+        l.find do |c|
+          return c if c.named? n
+        end
+      end
+      nil
     end
   end
 end

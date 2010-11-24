@@ -1,6 +1,6 @@
 module Mud
   class Player
-    attr_accessor :room, :name, :connection, :hashed_password
+    attr_accessor :room, :name, :connection, :hashed_password, :command_groups
 
     # create a new player. This should ONLY be called when a player is CREATED, not logged in.
     def initialize name,hashed_password
@@ -13,6 +13,7 @@ module Mud
       W.master_players << self
       puts W.master_players.inspect
       @room = W.default_room
+      @command_groups = []
     end
 
     # When a player logs into the mud, show some default messages, and add them to the room they
