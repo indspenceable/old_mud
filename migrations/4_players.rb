@@ -1,33 +1,49 @@
 module Mud
   class Player
-    attr_accessor :room, :name, :connection, :hashed_password, :command_groups
+    attr_accessor :connection, :hashed_password, :command_groups
+
+    #accessor
+    def room
+      W.rooms[@room]
+    end
+
+    #setter
+    def room= r
+      @room = r.sym
+    end
+
+    def sym
+      @name.to_sym
+    end
+    def display_name
+      @name.capitalize.freeze
+    end
 
     # create a new player. This should ONLY be called when a player is CREATED, not logged in.
     def initialize name,hashed_password
-      @name = name
+      @name = name.downcase
       @commands = []
       @hashed_password = hashed_password
 
       @pending_output = ""
 
-      W.master_players << self
-      puts W.master_players.inspect
-      @room = W.default_room
+      W.master_players[sym] = self
+      self.room = W.default_room
       @command_groups = []
     end
 
     # When a player logs into the mud, show some default messages, and add them to the room they
     # are currently located in. Also, add itself to th list of active players
     def login
-      @room.players << self
-      @room.echo("#{name} suddenly appears.", [self], :blue)
+      room.add_player self
+      room.echo("#{display_name} suddenly appears.", [self], :blue)
       hear_line("You fade in to being...", :blue)
       W.players << self
     end
     #inverse of login
     def logout
-      @room.players.delete(self)
-      @room.echo("#{name} dissapears.", [self], :blue)
+      room.remove_player self
+      room.echo("#{display_name} dissapears.", [self], :blue)
       hear_line("You fade out of being...", :blue)
       W.players.delete(self)
     end
@@ -69,12 +85,14 @@ module Mud
     # as the result of something else (like, moving invokes player.command "look")
     def command data, from_input=false
       command_name,args = data.split(' ', 2)
-      #we probably want to have a "find command" method
-      com = Commands::find_command(command_name)
-      if com 
+      # if args is nil, lets make it a string.
+      args ||= ""
+
+      
+      if com = Commands::find_command(command_name, @command_groups) 
         com.enact(self, args)
-      elsif @room.has_exit?(command_name)
-        @room.leave_to(self,command_name).arrive_from(self,command_name)
+      elsif room.has_exit?(command_name)
+        room.leave_to(self,command_name).arrive_from(self,command_name)
       else
         if (Room::DIRS.keys + Room::DIRS.values).include? command_name.to_sym
           hear_line "You can't go that direction!", :red
@@ -94,7 +112,7 @@ module Mud
       if @pending_output != ""
         @pending_output += prompt
         connection.send_data @pending_output
-        @pending_output = ""
+        clear_output
       end
     end
 
