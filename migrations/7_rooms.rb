@@ -54,20 +54,35 @@ module Mud
       dir = normalize_direction dir
       @exits.key? dir
     end
+
     #find the destination for going in a direction
     def dest dir
       dir = normalize_direction dir
-      @exits[dir]
+      W.rooms[@exits[dir]]
     end
+
     #create an exit
     def dig dir, target
       dir = normalize_direction dir
       @exits[dir] = target
     end
+
     #remove an exit
     def fill dir
       dir = normalize_direction dir
       @exits.remove(dir)
+    end
+
+    def exits_string
+      case
+      when @exits.size == 0
+        "There are no exits."
+      when @exits.size == 1
+        return "You see an exit to the #{@exits.keys[0]}."
+      else
+        keys = @exits.keys
+        "You see exits to the #{keys.first(keys.size-1).join(", ")} and #{keys.last}."
+      end
     end
 
     def echo string, list_of_players_to_avoid = [], color = :off
@@ -79,6 +94,7 @@ module Mud
       echo "#{player.display_name} leaves to the #{normalize_direction direction}"
       dest direction
     end
+
     def arrive_from player,direction
       echo "#{player.display_name} enters from the #{INVERSES[normalize_direction direction]}"
       add_player player
