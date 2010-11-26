@@ -1,7 +1,20 @@
 module Mud
   class Room
-    attr_reader :name, :description, :players
-    def initialize name, description
+    attr_reader :sym, :name, :description
+
+    #players
+    def players
+      @players.map{|n| W.master_players[n] }.freeze
+    end
+    def add_player p
+      @players << p.sym
+    end
+    def remove_player p
+      @players.delete(p.sym)
+    end
+
+    def initialize symbol, name, description
+      @sym = symbol
       @name = name
       @description = description
       @players = []
@@ -57,25 +70,18 @@ module Mud
       @exits.remove(dir)
     end
 
-    def players_string
-      @players.map{ |p| p.name }.join(", ")
-    end
-    def exits_string 
-      @exits.keys.map{ |e| e.to_s }.join(", ")
-    end
-
     def echo string, list_of_players_to_avoid = [], color = :off
-      (@players - list_of_players_to_avoid).each { |p| p.hear_line string, color }
+      (self.players - list_of_players_to_avoid).each { |p| p.hear_line string, color }
     end
 
     def leave_to player, direction
-      @players.delete(player)
-      echo "#{player.name} leaves to the #{normalize_direction direction}"
+      remove_player player
+      echo "#{player.display_name} leaves to the #{normalize_direction direction}"
       dest direction
     end
     def arrive_from player,direction
-      echo "#{player.name} enters from the #{INVERSES[normalize_direction direction]}"
-      @players << player
+      echo "#{player.display_name} enters from the #{INVERSES[normalize_direction direction]}"
+      add_player player
       player.room = self
       player.command "look"
     end
