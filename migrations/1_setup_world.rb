@@ -3,7 +3,7 @@
 # with a list of active players
 
 require 'singleton'
-require 'JSON'
+require 'yaml'
 
 module Mud
   # The world has all the global data about the game - a master list of 
@@ -11,16 +11,20 @@ module Mud
   # items
   class World
     include Singleton
-    attr_reader :master_players, :players, :rooms, :items
+    attr_reader :master_players, :players, :items
     attr_accessor :default_room
 
+    def rooms
+      @rooms.dup.freeze
+    end
+
     def initialize 
-      
-      @master_players = []
+      @master_players = {}
       @players = []
-      @rooms = []
+      @rooms = {}
       @items = []
     end
+
 
     # This lets us load up the gamestate. A bunch of info is hashshed into 
     # the yaml file, so we read it into our variables. Of course, when you 
@@ -28,31 +32,37 @@ module Mud
     # go through and remove players from the rooms load state will not save 
     # connections 
     def load_state 
-      # loading state.
       begin
         directory = File.join(File.dirname(File.expand_path(__FILE__)),'..','saves')
         entries = Dir.entries(directory)
         entries.reject!{|en| (en=~/\A\d{4}_\d{2}_\d{2}_\d{2}_\d{2}\.yaml\z/).nil?}
         load_from = entries[0]
         # yml = W.load_state(YAML.parse_file load_from)
-        yml = JSON.load_file(File.join(directory,load_from))
+        yml = YAML.load_file(File.join(directory,load_from))
         raise "bah!" unless yml
         @master_players, @rooms, @default_room = yml
         @rooms.each { |r| r.players.clear }
-        @master_players.each { |p| p.clear_output }
+        @master_players.each_pair { |n,p| p.clear_output }
       rescue Object => e
         puts 'There was an error wtih loading'
         puts "************************************************"
         puts e.backtrace
         puts "************************************************"
         puts 'running the scaffolding script instead.'
+        @master_players = {}
+        @rooms = {}
+        @items = []
         Migrator.script('scaffold.rb')
       end
     end
     # Save the state. This saves data in the same format the load_state reads. TODO - Make it not save the connections
     def dump_state
       f = File.new(File.join(File.dirname(File.expand_path(__FILE__)),"..","saves","#{Time.now.strftime("%Y_%m_%d_%H_%M")}.yaml"),"w")
-      f << JSON.dump([@master_players, @rooms, @default_room])
+
+      yml = YAML.dump([@master_players, @rooms, @default_room])
+      puts "Yaml is #{yml}"
+      f << yml
+      f.close
     end
 
     # determine if a name is valid. This just checks the rexegp
@@ -74,6 +84,18 @@ module Mud
       raise "No default room!" unless @default_room
       @default_room
     end
+
+    def add_room r
+      raise "Already a room with that name." if @rooms.key? r.name.to_sym
+      @rooms[r.sym] = r
+    end
+
+    def each_room
+      @rooms.each_pair do |n,r|
+        yield r
+      end
+    end
+
   end
   W = World.instance
 end
