@@ -42,8 +42,7 @@ module Mud
         if !W.valid_name? data
           @connection.send_line "that's not a valid character name"
         else
-          pl = W.master_players.find{|p| p.name==data}
-          unless pl
+          unless (pl = W.master_players[data.to_sym])
             @connection.send_line "There's no player by that name."
           else
             @connection.send_line enter_password_message
@@ -55,7 +54,7 @@ module Mud
     end
 
     def choose_character_name data
-      if W.master_players.find{|p| p.name == data }
+      if W.master_players[data.to_sym]
         @connection.send_line "Sorry, that name is already taken."
         @connection.send_line choose_character_name_message
       elsif !W.valid_name? data
@@ -72,7 +71,7 @@ module Mud
       if !W.valid_password? data
         @connection.send_line "Sorry, that is an invalid password."
         initialize @connection
-      elsif W.master_players.find{|p| p.name == @player_name }
+      elsif W.master_players[@player_name.to_sym]
         @connection.send_line "That sucks! While you were registering, someone else created a character with that name. Try again! "
         initialize @connection
       else
@@ -99,8 +98,8 @@ module Mud
           @player.connection = @connection
           @connection.delegate = @player
         else
-          @player.room.players << @player
-          W.players << @player
+          @player.room.add_player @player
+          W.players<< @player
           @player.connection = @connection
           @connection.delegate = @player
         end
