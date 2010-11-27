@@ -12,13 +12,14 @@ module Mud
   class World
     include Singleton
     attr_reader :master_players, :players, :items
-    attr_accessor :default_room
+    attr_accessor :player_connection_map
 
     def rooms
       @rooms.dup.freeze
     end
 
     def initialize 
+      @player_connection_map = {}
       @master_players = {}
       @players = []
       @rooms = {}
@@ -36,13 +37,15 @@ module Mud
         directory = File.join(File.dirname(File.expand_path(__FILE__)),'..','saves')
         entries = Dir.entries(directory)
         entries.reject!{|en| (en=~/\A\d{4}_\d{2}_\d{2}_\d{2}_\d{2}\.yaml\z/).nil?}
-        load_from = entries[0]
+        load_from = entries[entries.size - 1]
         # yml = W.load_state(YAML.parse_file load_from)
         yml = YAML.load_file(File.join(directory,load_from))
-        raise "bah!" unless yml
+        puts "Loading #{directory}/#{load_from}..."
+        raise "Yaml is nil" unless yml
         @master_players, @rooms, @default_room = yml
-        @rooms.each { |r| r.players.clear }
-        @master_players.each_pair { |n,p| p.clear_output }
+        @rooms.each_pair { |n,r| r.on_load }
+        @master_players.each_pair { |n,p| p.on_load }
+        puts "Loaded Game."
       rescue Object => e
         puts 'There was an error wtih loading'
         puts "************************************************"
@@ -58,11 +61,9 @@ module Mud
     # Save the state. This saves data in the same format the load_state reads. TODO - Make it not save the connections
     def dump_state
       f = File.new(File.join(File.dirname(File.expand_path(__FILE__)),"..","saves","#{Time.now.strftime("%Y_%m_%d_%H_%M")}.yaml"),"w")
-
-      yml = YAML.dump([@master_players, @rooms, @default_room])
-      puts "Yaml is #{yml}"
-      f << yml
+      f << YAML.dump([@master_players, @rooms, @default_room])
       f.close
+      puts "Saved game."
     end
 
     # determine if a name is valid. This just checks the rexegp
@@ -82,7 +83,10 @@ module Mud
     # get the default room, or raise an error if none exists
     def default_room
       raise "No default room!" unless @default_room
-      @default_room
+      rooms[@default_room]
+    end
+    def default_room= r
+      @default_room = r.sym
     end
 
     def add_room r
@@ -96,6 +100,19 @@ module Mud
       end
     end
 
+  end
+
+  #This probably shouldn't be here. This should be in the items location. BUT TOO BAD. FOR NOWu
+  module HasInventory
+    def items
+      (@inventory ||= []).map{|id| W.items[id]}.freeze
+    end
+    def remove_item id
+      (@inventory ||= []).delete id
+    end
+    def add_item id
+      @inventory << id unless (@inventory ||= []).include? id
+    end
   end
   W = World.instance
 end
