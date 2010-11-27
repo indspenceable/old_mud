@@ -9,4 +9,7 @@ module Mud
   p = Player.new "danny", Digest::MD5.hexdigest('danny')
   p.command_groups << :admin
   p.command_groups << :builder
+
+  Sword.new(p)
+
 end
