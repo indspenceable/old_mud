@@ -1,6 +1,7 @@
 module Mud
   class Room
-    attr_reader :sym, :name, :description
+    attr_reader :sym
+    attr_accessor :name, :description
 
     #players
     def players
@@ -19,6 +20,10 @@ module Mud
       @description = description
       @players = []
       @exits = {}
+    end
+
+    def on_load
+      @players.clear
     end
 
     DIRS = { 
@@ -45,12 +50,14 @@ module Mud
     end
 
     def normalize_direction dir
+      nil unless dir
       dir = dir.to_sym
       dir = DIRS[dir] if DIRS.key? dir
       dir
     end
 
     def has_exit? dir
+      return false unless dir
       dir = normalize_direction dir
       @exits.key? dir
     end
