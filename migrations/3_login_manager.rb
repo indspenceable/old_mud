@@ -105,7 +105,7 @@ module Mud
         end
       else
         @connection.send_line "Incorrect password"
-        initialize
+        initialize @connection
       end
     end
   end
