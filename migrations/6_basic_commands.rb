@@ -90,15 +90,36 @@ module Mud
     end
     CommandList[:admin] << Shutdown.new
 
+    class Build < Command
+      def initialize
+        super("build", [])
+      end
+      def enact player, args
+        args = args.split(" ")
+        begin
+          raise "You must enter the name of the new room!" unless args[0]
+          room_name = args[0].downcase.to_sym
+          W.add_room(Room.new(room_name, "Title", "A generic area."))
+          player.hear_line "You have built room [#{room_name}]."
+        rescue RuntimeError => e
+          player.hear_line e.to_s, :red
+        end
+      end
+    end
+    CommandList[:builder] << Build.new
+    
     class Dig < Command
       def initialize
         super("dig", [])
       end
       def enact player, args
-        args = args.split(" ",-2) 
+        args = args.split(" ")
         begin
-          raise "You must enter the name of the new room!" unless args[0]
-          W.add_room(Room.new(args[0].to_sym, "Title", "A generic area."))
+          raise "You must enter a direction to dig in." unless args[0]
+          raise "You must designate the destination." unless args[1]
+          raise "There is no room with that name!" unless W.rooms[args[1].to_sym]
+          player.room.dig args[0], args[1].to_sym
+          player.hear_line "You succesfully dig."
         rescue RuntimeError => e
           player.hear_line e.to_s, :red
         end
@@ -126,7 +147,7 @@ module Mud
       def enact player, args
         player.hear_line "Players online: "
         W.players.each do |p|
-          player.hear_line "\t#{p.name}"
+          player.hear_line "\t#{p.display_name}"
         end
       end
     end
@@ -154,5 +175,115 @@ module Mud
       end
     end
     CommandList[:admin] << Goto.new
+
+    class Describe < Command
+      def initialize
+        super("describe", [])
+      end
+      def enact player, args
+        args = args.split(" ", 2)
+        case
+        when args.size != 2
+          player.hear_line "You must specify name or description, and then give the text for that quality."
+        when args[0] == "name"
+          player.room.name = args[1]
+          player.room.echo "In a flash of lights, your surroundings have transformed."
+        when args[0] == "description"
+          player.room.description = args[1] if args[0] == "description"
+          player.room.echo "In a flash of lights, your surroundings have transformed."
+        else
+          player.hear_line "You must describe the name or the description."
+        end
+      end
+    end
+    CommandList[:global] << Describe.new
+
+    class Emote < Command
+      def initialize
+        super 'emote', []
+      end
+      def enact player, args
+        player.room.echo "#{player.display_name} #{args}", [player]
+        player.hear_line "You #{args}"
+      end
+    end
+    CommandList[:global] << Emote.new
+
+
+    class Score < Command
+      def initialize
+        super 'score', ['sc','status','stat']
+      end
+      def enact player, args
+        player.hear_line "#{player.display_name}"
+        hp_percent = player.hp.to_f/player.max_hp
+        player.hear_line "#{player.hp}/#{player.max_hp} hp", case
+        when hp_percent > 0.66
+          :green
+        when hp_percent > 0.33
+          :yello
+        else
+          :red
+        end
+        player.hear_line "#{player.mp}/#{player.max_mp} mp"
+      end
+    end
+    CommandList[:global] << Score.new
+
+    #this is a temporary command
+    class DamageSelf < Command
+      def initialize
+        super "damage", []
+      end
+      def enact player, args
+        args = args.split(" ")
+        begin
+          case
+          when args[0] == "hp"
+            player.hp -= args[1].to_i
+          when args[0] = "mp"
+            player.mp -= args[1].to_i
+          else
+            raise "Invalid argument"
+          end
+          player.hear_line "You damaged yourself, jerk."
+        rescue
+          player.hear_line "Error raised.", :red
+        end
+      end
+    end
+    CommandList[:global] << DamageSelf.new
+
+    class Inventory < Command
+      def initialize
+        super "inventory", ["inv", "i", "ii"]
+      end
+      def enact player, args
+        inventory_string = nil
+        case
+        when player.items.size == 0
+          player.hear_line "No items."
+        when player.items.size == 1
+          player.hear_line player.items[0].display_name
+        else
+          item_names = player.items.map{|i| i.display_name}
+          player.hear_line item_names.first(item_names.size - 1).join(", ") + " and " + item_names[item_names.size-1] + "."
+        end
+      end
+    end
+    CommandList[:global] << Inventory.new
+
+    class RoomList < Command
+      def initialize
+        super "roomlist", ["rl"]
+      end
+      def enact player, args
+        player.hear_line "Room list:"
+        W.rooms.each_pair do |k,v|
+          player.hear_line "\t#{k.to_s}"
+        end
+      end
+    end
+    CommandList[:admin] << RoomList.new
   end
 end
