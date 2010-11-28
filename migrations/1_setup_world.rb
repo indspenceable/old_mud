@@ -5,7 +5,22 @@
 require 'singleton'
 require 'yaml'
 
+
 module Mud
+
+  #this is for utility
+  def self.list_array ary, default_message = ""
+    case
+    when ary.size == 0
+      default_message
+    when ary.size == 1
+      ary[0]
+    else
+      ary.first(ary.size - 1).join(" ,") + " and " + ary[ary.size]
+    end
+  end
+
+
   # The world has all the global data about the game - a master list of 
   # players, the list of logged in players, all of the rooms, and all the 
   # items
@@ -42,7 +57,7 @@ module Mud
         yml = YAML.load_file(File.join(directory,load_from))
         puts "Loading #{directory}/#{load_from}..."
         raise "Yaml is nil" unless yml
-        @master_players, @rooms, @default_room = yml
+        @master_players, @rooms, @default_room, @items= yml
         @rooms.each_pair { |n,r| r.on_load }
         @master_players.each_pair { |n,p| p.on_load }
         puts "Loaded Game."
@@ -61,7 +76,7 @@ module Mud
     # Save the state. This saves data in the same format the load_state reads. TODO - Make it not save the connections
     def dump_state
       f = File.new(File.join(File.dirname(File.expand_path(__FILE__)),"..","saves","#{Time.now.strftime("%Y_%m_%d_%H_%M")}.yaml"),"w")
-      f << YAML.dump([@master_players, @rooms, @default_room])
+      f << YAML.dump([@master_players, @rooms, @items, @default_room])
       f.close
       puts "Saved game."
     end
@@ -104,6 +119,9 @@ module Mud
 
   #This probably shouldn't be here. This should be in the items location. BUT TOO BAD. FOR NOWu
   module HasInventory
+    def find_item i
+      items.find{|ci| ci.id?(i) || ci.named?(i)}
+    end
     def items
       (@inventory ||= []).map{|id| W.items[id]}.freeze
     end
