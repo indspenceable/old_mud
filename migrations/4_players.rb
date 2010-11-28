@@ -81,8 +81,8 @@ module Mud
     def hear_line *args
       raise "must give arguments" if args.size == 0
       args << nil if (args.size%2) ==  1
-      args[args.size-2] += "\n"
       hear *args
+      @pending_output += "\n"
     end
 
     def hear *args
