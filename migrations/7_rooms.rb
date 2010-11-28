@@ -3,6 +3,8 @@ module Mud
     attr_reader :sym
     attr_accessor :name, :description
 
+    include HasInventory
+
     #players
     def players
       @players.map{|n| W.master_players[n] }.freeze
