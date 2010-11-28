@@ -1,4 +1,8 @@
 module Mud
+  module Errors
+    class NoBalanceError < Exception
+    end
+  end
   class Player
     attr_accessor :hashed_password, :command_groups
     attr_accessor :hp, :mp, :max_hp, :max_mp
@@ -44,6 +48,9 @@ module Mud
       self.max_mp = 100
       self.hp= max_hp
       self.mp= max_mp
+
+
+      @off_balance_timer = {}
     end
 
     # when you load the player back into the game from a serialized state, here are some things we
@@ -82,7 +89,7 @@ module Mud
       raise "must give arguments" if args.size == 0
       args << nil if (args.size%2) ==  1
       hear *args
-      @pending_output += "\n"
+      @pending_output += "\n\r"
     end
 
     def hear *args
@@ -127,17 +134,41 @@ module Mud
       # if args is nil, lets make it a string.
       args ||= ""
       
-      if com = Commands::find_command(command_name, @command_groups) 
-        com.enact(self, args)
-      elsif room.has_exit?(command_name)
-        room.leave_to(self,command_name).arrive_from(self,command_name)
-      else
-        if (Room::DIRS.keys + Room::DIRS.values).include? command_name.to_sym
-          hear_line "You can't go that direction!", :red
+      # either - is there a command?
+      # or, there is an exit in this room/a standard exit by that name.
+      # elsewise, "you can't do that."
+      begin
+        if com = Commands::find_command(command_name, @command_groups) 
+          com.enact(self, args)
+        elsif room.has_exit?(command_name)|| (Room::DIRS.keys + Room::DIRS.values).include?(command_name.to_sym)
+          Commands::find_command("move", @command_groups).enact(self,data)
+          #room.leave_to(self,command_name).arrive_from(self,command_name)
         else
           hear_line "You can't do that!"
         end
+      rescue Errors::NoBalanceError => e
+        hear_line "You can't do that off balance."
+      rescue Exception => e
+        hear_line "You've triggered an uncaught exception. Please report this to the mud...."
+        puts "There has been an uncaught exception, triggered by #{display_name} trying to do a command with #{data}"
+        puts "It raised #{e} at"
+        puts e.backtrace
       end
+    end
+
+    def unbalance_for balance_type, t
+      @off_balance_timer[balance_type] = (@off_balance_timer[balance_type] || 0) + t
+    end
+    def update_balance dt
+      @off_balance_timer.keys.each do |k|
+        if @off_balance_timer[k] && (@off_balance_timer[k] -= dt) <= 0
+          hear_line "You have regained #{k.to_s}"
+          @off_balance_timer[k] = nil
+        end
+      end
+    end
+    def on_balance? balance_type
+      !@off_balance_timer[balance_type]
     end
 
     #generates a prompt string.
@@ -161,7 +192,10 @@ module Mud
                  else
                    :red
                  end
-      hear "#{hp}/#{max_hp} ", [hp_color], "#{mp}/#{max_mp}", [mp_color], " -", nil
+      hear("#{hp}/#{max_hp} ", [hp_color], 
+           "#{mp}/#{max_mp}", [mp_color], 
+           " #{on_balance?(:balance) ? "x" : " "}#{on_balance?(:equilibrium) ? "e" : " "}-", nil)
+
     end
 
     #this allows simultanious output to be batched together in the same package.
@@ -176,5 +210,11 @@ module Mud
     def clear_output
       @pending_output = "" 
     end
+
+    def tick dt
+      update_balance dt
+      flush_output
+    end
+
   end
 end

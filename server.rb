@@ -9,11 +9,15 @@ EventMachine::run do
   Mud::Migrator.migrate
   Mud::W.load_state
 
+  last_time = Time.now.to_f * 100
+
   EventMachine::start_server host, port, Mud::Connection
   puts "listening at #{host} on #{port}"
   EventMachine::PeriodicTimer.new(0) do
+    dt = Time.now.to_f*100 - last_time
     Mud::W.players.each do |p|
-      p.flush_output
+      p.tick dt
     end
+    last_time = Time.now.to_f * 100
   end
 end

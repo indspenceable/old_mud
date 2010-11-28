@@ -20,6 +20,11 @@ module Mud
       end
 
       ## this is where other helper methods might go, for parsing arguments and such
+
+      #this Raises
+      def require_balance player, type = :balance
+        raise Errors::NoBalanceError.new unless player.on_balance? type
+      end
     end
 
     # this is a hash of command lists.

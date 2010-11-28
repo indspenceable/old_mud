@@ -38,6 +38,9 @@ module Mud
       end
       def enact player, args
         player.room.echo "#{player.display_name} says: \"#{args}\"", [player]
+        #player.items.each do |i|
+        #  i.hear args if i.respond_to?(:hear)
+        #end
         player.hear_line "You say: \"#{args}\""
       end
     end
@@ -237,6 +240,8 @@ module Mud
         super "damage", []
       end
       def enact player, args
+        require_balance player
+        player.unbalance_for :balance, 500
         args = args.split(" ")
         begin
           case
@@ -295,6 +300,7 @@ module Mud
         super "drop", []
       end
       def enact player, args
+        require_balance player
         args = args.split(" ")
         if (i = player.find_item args[0])
           i.move_to player.room
@@ -312,6 +318,7 @@ module Mud
         super "get", ["take"]
       end
       def enact player, args
+        require_balance player
         args = args.split(" ")
         if (i = player.room.find_item args[0])
           i.move_to player
@@ -323,5 +330,19 @@ module Mud
       end
     end
     CommandList[:global] << Get.new
+
+    class Move < Command
+      def initialize
+        super("move", ["take"])
+      end
+      def enact player, args
+        require_balance player
+        args = args.split(' ')
+        puts "args is #{args[0]}"
+        return player.room.leave_to(player,args[0]).arrive_from(player,args[0]) if player.room.has_exit?(args[0])
+        player.hear_line "You can't go in that direction!"
+      end
+    end
+    CommandList[:global] << Move.new
   end
 end
