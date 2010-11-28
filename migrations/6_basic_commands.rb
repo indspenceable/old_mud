@@ -50,9 +50,10 @@ module Mud
       end
       def enact player, args
         player.hear_line player.room.name, :yellow
-        player.hear_line player.room.description
-        player.hear_line player.room.players.reject{|p| p == player}.map{|p| p.display_name }.join(", "), :blue
-        player.hear_line player.room.exits_string, :yellow
+        player.hear_line(player.room.description + " ", nil,
+                         player.room.players.reject{|p| p == player}.map{|p| p.display_name }.join(", ") + " ", :blue,
+                         (Mud::list_array player.room.items.map{|i| i.display_string}) + " ", nil)
+        player.hear_line(player.room.exits_string, :yellow)
       end
     end
     CommandList[:global] << Look.new
@@ -107,7 +108,7 @@ module Mud
       end
     end
     CommandList[:builder] << Build.new
-    
+
     class Dig < Command
       def initialize
         super("dig", [])
@@ -196,7 +197,7 @@ module Mud
         end
       end
     end
-    CommandList[:global] << Describe.new
+    CommandList[:builder] << Describe.new
 
     class Emote < Command
       def initialize
@@ -259,19 +260,22 @@ module Mud
         super "inventory", ["inv", "i", "ii"]
       end
       def enact player, args
-        inventory_string = nil
-        case
-        when player.items.size == 0
-          player.hear_line "No items."
-        when player.items.size == 1
-          player.hear_line player.items[0].display_name
-        else
-          item_names = player.items.map{|i| i.display_name}
-          player.hear_line item_names.first(item_names.size - 1).join(", ") + " and " + item_names[item_names.size-1] + "."
-        end
+        player.hear_line Mud::list_array(player.items.map{|i| i.display_string}, "You are carrying nothing.")
       end
     end
     CommandList[:global] << Inventory.new
+
+    class Examine < Command
+      def initialize
+        super "examine", ["probe","check"]
+      end
+      def enact player, args
+        args = args.split(' ')
+        return player.hear_line "What do you want to look at?" unless args.size > 0
+        player.hear_line "Yeah, mostly unimplemented."
+      end
+    end
+    CommandList[:global] << Examine.new
 
     class RoomList < Command
       def initialize
@@ -285,5 +289,39 @@ module Mud
       end
     end
     CommandList[:admin] << RoomList.new
+
+    class Drop < Command
+      def initialize
+        super "drop", []
+      end
+      def enact player, args
+        args = args.split(" ")
+        if (i = player.find_item args[0])
+          i.move_to player.room
+          player.room.echo "#{player.display_name} drops #{i.display_string}", [player]
+          player.hear_line "You drop #{i.display_string}"
+        else
+          player.hear_line "You don't see anything called that."
+        end
+      end
+    end
+    CommandList[:global] << Drop.new
+
+    class Get < Command
+      def initialize
+        super "get", ["take"]
+      end
+      def enact player, args
+        args = args.split(" ")
+        if (i = player.room.find_item args[0])
+          i.move_to player
+          player.room.echo "#{player.display_name} takes #{i.display_string}", [player]
+          player.hear_line "You take #{i.display_string}"
+        else
+          player.hear_line "You don't see anything called that."
+        end
+      end
+    end
+    CommandList[:global] << Get.new
   end
 end
