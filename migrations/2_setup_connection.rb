@@ -1,3 +1,5 @@
+# This implementation of a connection is based on EventMachine.
+
 require 'eventmachine'
 
 module Mud
