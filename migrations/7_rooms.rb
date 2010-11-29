@@ -7,7 +7,7 @@ module Mud
 
     #players
     def players
-      @players.map{|n| W.master_players[n] }.freeze
+      @players.map{|n| W.find_player(n) }.freeze
     end
     def add_player p
       @players << p.sym
