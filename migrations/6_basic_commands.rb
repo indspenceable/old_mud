@@ -55,11 +55,11 @@ module Mud
         if args == ""
           player.hear_line player.room.name, :yellow
           player.hear_line(player.room.description + " ", nil,
-                           player.room.players.reject{|p| p == player}.map{|p| p.display_name }.join(", ") + " ", :blue,
-                           (Mud::list_array player.room.items.map{|i| i.display_string}) + " ", nil)
+                           player.room.players.reject{|p| p == player}.map{|p| p.display_description }.join(", ") + " ", :blue,
+                           (Mud::list_array player.room.items.map{|i| i.long_display_string}) + " ", nil)
           player.hear_line(player.room.exits_string, :yellow)
         else
-          target, = process player, args, [[:player_here, :item, :mob]]
+          target, = process player, args, [[:player_here, :item]]
           if target
             player.hear_line "That is here."
           else
@@ -272,7 +272,7 @@ module Mud
         super "inventory", ["inv", "i", "ii"]
       end
       def enact player, args
-        player.hear_line Mud::list_array(player.items.map{|i| i.display_string}, "You are carrying nothing.")
+        player.hear_line Mud::list_array(player.items.map{|i| i.short_display_string}, "You are carrying nothing.")
       end
     end
     CommandList[:global] << Inventory.new
@@ -311,8 +311,8 @@ module Mud
         to_drop, = process player, args, [:item_from_inventory]
         if to_drop
           to_drop.move_to player.room
-          player.room.echo "#{player.display_name} drops #{to_drop.display_string}", [player]
-          player.hear_line "You drop #{to_drop.display_string}"
+          player.room.echo "#{player.display_name} drops #{to_drop.short_display_string}", [player]
+          player.hear_line "You drop #{to_drop.short_display_string}"
         else
           player.hear_line "You don't have that."
         end
@@ -329,8 +329,8 @@ module Mud
         to_get, = process player, args, [:item_from_room]
         if to_get
           to_get.move_to player
-          player.room.echo "#{player.display_name} gets #{to_get.display_string}", [player]
-          player.hear_line "You get #{to_get.display_string}"
+          player.room.echo "#{player.display_name} gets #{to_get.short_display_string}", [player]
+          player.hear_line "You get #{to_get.short_display_string}"
         else
           player.hear_line "You don't see that."
         end
@@ -350,5 +350,44 @@ module Mud
       end
     end
     CommandList[:global] << Move.new
+
+    class Wield < Command
+      def initialize
+        super("wield", [])
+      end
+      def enact player, args
+        require_balance player
+        to_wield, = process player, args, [:item_from_inventory]
+        if to_wield
+          player.set_item :weapon, to_wield
+          player.room.echo "#{player.display_name} wields #{to_wield.short_display_string}.", [player]
+          player.hear_line "You begin to wield #{to_wield.short_display_string}"
+        else
+          player.hear_line "You don't have that."
+        end
+      end
+    end
+    CommandList[:global] << Wield.new
+
+    class Swing < Command
+      def initialize
+        super("swing", [])
+      end
+      def enact player, args
+        if (w = player.item_for :weapon)
+          target, = process player, args, [:player_here]
+          if target
+            power =(w.respond_to?(:weapon_power)? w.weapon_power : 3)
+            target.take_damage power, player.sym, :swords
+          else
+            player.hear_line "Swing at what?"
+          end
+        else
+          player.hear_line "You need a weapon equipped to do that!"
+        end
+      end
+    end
+    CommandList[:global] << Swing.new
+
   end
 end
