@@ -16,7 +16,7 @@ module Mud
     when ary.size == 1
       ary[0]
     else
-      ary.first(ary.size - 1).join(" ,") + " and " + ary[ary.size]
+      ary.first(ary.size - 1).join(", ") + " and " + ary[ary.size-1]
     end
   end
 
