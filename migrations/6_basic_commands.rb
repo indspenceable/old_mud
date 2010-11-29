@@ -272,7 +272,7 @@ module Mud
         super "inventory", ["inv", "i", "ii"]
       end
       def enact player, args
-        player.hear_line Mud::list_array(player.items.map{|i| i.short_display_string}, "You are carrying nothing.")
+        player.hear_line Mud::list_array(player.items.map{|i| i.short_display_string}, "You are carrying nothing.").capitalize
       end
     end
     CommandList[:global] << Inventory.new
@@ -377,8 +377,11 @@ module Mud
         if (w = player.item_for :weapon)
           target, = process player, args, [:player_here]
           if target
+            return player.hear_line "You can't attack yourself!" if target == player
             power =(w.respond_to?(:weapon_power)? w.weapon_power : 3)
-            target.take_damage power, player.sym, :swords
+            target.take_damage power, player.sym, :swords, "#{player.display_name} swings #{w.short_display_string} at you visciously."
+            player.room.echo "#{player.display_name} swings #{w.short_display_string} at #{target.display_name} visciously.", [player, target]
+            player.hear_line "You swing #{w.short_display_string} at #{target.display_name} visciously."
           else
             player.hear_line "Swing at what?"
           end
