@@ -24,6 +24,9 @@ module Mud
     def display_name
       @name.capitalize.freeze
     end
+    def display_description
+      @name.capitalize + ((item_for :weapon) ? (", wielding " + item_for(:weapon).short_display_string) : "") + "."
+    end
     def is_named? n
       n && n.downcase == @name
     end
@@ -172,6 +175,13 @@ module Mud
     end
     def on_balance? balance_type
       !@off_balance_timer[balance_type]
+    end
+
+    def take_damage amt, name, sym
+      @hp -= amt
+      @last_hit_by = name
+      @kill_type = sym
+      # check if you died?
     end
 
     #generates a prompt string.
