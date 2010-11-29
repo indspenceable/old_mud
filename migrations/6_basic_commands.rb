@@ -338,7 +338,6 @@ module Mud
       def enact player, args
         require_balance player
         args = args.split(' ')
-        puts "args is #{args[0]}"
         return player.room.leave_to(player,args[0]).arrive_from(player,args[0]) if player.room.has_exit?(args[0])
         player.hear_line "You can't go in that direction!"
       end
