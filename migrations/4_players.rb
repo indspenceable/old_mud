@@ -6,7 +6,6 @@ module Mud
   class Player
     attr_accessor :hashed_password, :command_groups
     attr_accessor :hp, :mp, :max_hp, :max_mp
-    include HasInventory
 
     #accessor
     def room
@@ -25,9 +24,10 @@ module Mud
       @name.capitalize.freeze
     end
     def display_description
-      @name.capitalize + ((item_for :weapon) ? (", wielding " + item_for(:weapon).short_display_string) : "") + "."
+      @name.capitalize + " stands here" + ((item_for :weapon) ? (", wielding " + item_for(:weapon).short_display_string) : "") + "."
     end
     def is_named? n
+      puts "n is #{n} and i am #{self}"
       n && n.downcase == @name
     end
 
@@ -177,10 +177,11 @@ module Mud
       !@off_balance_timer[balance_type]
     end
 
-    def take_damage amt, name, sym
+    def take_damage amt, name, sym, message
       @hp -= amt
       @last_hit_by = name
       @kill_type = sym
+      hear_line message
       # check if you died?
     end
 
