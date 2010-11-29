@@ -52,11 +52,20 @@ module Mud
         super("look",["l"])
       end
       def enact player, args
-        player.hear_line player.room.name, :yellow
-        player.hear_line(player.room.description + " ", nil,
-                         player.room.players.reject{|p| p == player}.map{|p| p.display_name }.join(", ") + " ", :blue,
-                         (Mud::list_array player.room.items.map{|i| i.display_string}) + " ", nil)
-        player.hear_line(player.room.exits_string, :yellow)
+        if args == ""
+          player.hear_line player.room.name, :yellow
+          player.hear_line(player.room.description + " ", nil,
+                           player.room.players.reject{|p| p == player}.map{|p| p.display_name }.join(", ") + " ", :blue,
+                           (Mud::list_array player.room.items.map{|i| i.display_string}) + " ", nil)
+          player.hear_line(player.room.exits_string, :yellow)
+        else
+          target, = process player, args, [[:player_here, :item, :mob]]
+          if target
+            player.hear_line "That is here."
+          else
+            player.hear_line "You can't see anything by that name."
+          end
+        end
       end
     end
     CommandList[:global] << Look.new
@@ -99,14 +108,14 @@ module Mud
         super("build", [])
       end
       def enact player, args
-        args = args.split(" ")
-        begin
-          raise "You must enter the name of the new room!" unless args[0]
+        existing_room, = process player, args, [:room]
+        unless existing_room  
+          args = args.split(" ")
           room_name = args[0].downcase.to_sym
           W.add_room(Room.new(room_name, "Title", "A generic area."))
           player.hear_line "You have built room [#{room_name}]."
-        rescue RuntimeError => e
-          player.hear_line e.to_s, :red
+        else
+          player.hear_line "There already exists a room by that name..."
         end
       end
     end
@@ -118,15 +127,11 @@ module Mud
       end
       def enact player, args
         args = args.split(" ")
-        begin
-          raise "You must enter a direction to dig in." unless args[0]
-          raise "You must designate the destination." unless args[1]
-          raise "There is no room with that name!" unless W.rooms[args[1].to_sym]
-          player.room.dig args[0], args[1].to_sym
-          player.hear_line "You succesfully dig."
-        rescue RuntimeError => e
-          player.hear_line e.to_s, :red
-        end
+        return player.hear_line "You must enter a direction to dig in." unless args[0]
+        return player.hear_line "You must designate the destination." unless args[1]
+        return player.hear_line "There is no room with that name!" unless W.rooms[args[1].to_sym]
+        player.room.dig args[0], args[1].to_sym
+        player.hear_line "You succesfully dig."
       end
     end
     CommandList[:builder] << Dig.new
@@ -162,19 +167,21 @@ module Mud
         super("goto", [])
       end
       def enact player, args
-        r_name = args.downcase.to_sym
-        if !W.rooms[r_name]
-          player.hear_line "There is no room by that name."
-        elsif W.rooms[r_name] == player.room
-          player.hear_line "You are alredy in that room..."
+        target_room, = process player, args, [:room]
+        if target_room
+          if target_room == player.room
+            player.hear_line "You are alredy in that room..."
+          else
+            player.room.echo "#{player.display_name} suddenly dissapears.", [player]
+            player.hear_line "You vanish suddenly, and appear somewhere new..."
+            player.room.remove_player player
+            player.room = target_room
+            player.room.add_player player
+            player.room.echo "#{player.display_name} suddenly materializes.", [player]
+            player.command "look";
+          end
         else
-          player.room.echo "#{player.display_name} suddenly dissapears.", [player]
-          player.hear_line "You vanish suddenly, and appear somewhere new..."
-          player.room.remove_player player
-          player.room = W.rooms[r_name]
-          player.room.add_player player
-          player.room.echo "#{player.display_name} suddenly materializes.", [player]
-          player.command "look";
+          player.hear_line "There is no room by that name."
         end
       end
     end
@@ -275,9 +282,9 @@ module Mud
         super "examine", ["probe","check"]
       end
       def enact player, args
-        args = args.split(' ')
-        return player.hear_line "What do you want to look at?" unless args.size > 0
-        player.hear_line "Yeah, mostly unimplemented."
+        looking_at, = process player, args, [[:player_here, :item]]
+        return player.hear_line "yes, that is here." if looking_at
+        player.hear_line "No that is not here."
       end
     end
     CommandList[:global] << Examine.new
@@ -301,13 +308,13 @@ module Mud
       end
       def enact player, args
         require_balance player
-        args = args.split(" ")
-        if (i = player.find_item args[0])
-          i.move_to player.room
-          player.room.echo "#{player.display_name} drops #{i.display_string}", [player]
-          player.hear_line "You drop #{i.display_string}"
+        to_drop, = process player, args, [:item_from_inventory]
+        if to_drop
+          to_drop.move_to player.room
+          player.room.echo "#{player.display_name} drops #{to_drop.display_string}", [player]
+          player.hear_line "You drop #{to_drop.display_string}"
         else
-          player.hear_line "You don't see anything called that."
+          player.hear_line "You don't have that."
         end
       end
     end
@@ -319,13 +326,13 @@ module Mud
       end
       def enact player, args
         require_balance player
-        args = args.split(" ")
-        if (i = player.room.find_item args[0])
-          i.move_to player
-          player.room.echo "#{player.display_name} takes #{i.display_string}", [player]
-          player.hear_line "You take #{i.display_string}"
+        to_get, = process player, args, [:item_from_room]
+        if to_get
+          to_get.move_to player
+          player.room.echo "#{player.display_name} gets #{to_get.display_string}", [player]
+          player.hear_line "You get #{to_get.display_string}"
         else
-          player.hear_line "You don't see anything called that."
+          player.hear_line "You don't see that."
         end
       end
     end
