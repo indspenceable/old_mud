@@ -26,11 +26,19 @@ module Mud
   # items
   class World
     include Singleton
-    attr_reader :master_players, :players, :items
+    attr_reader :players, :items
     attr_accessor :player_connection_map
 
     def rooms
       @rooms.dup.freeze
+    end
+
+    def find_player(n)
+      n = n.downcase.to_sym if n.is_a? String
+      @master_players[n]
+    end
+    def create_player(p)
+      @master_players[p.sym] = p
     end
 
     def initialize 
