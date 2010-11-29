@@ -24,6 +24,9 @@ module Mud
     def display_name
       @name.capitalize.freeze
     end
+    def is_named? n
+      n && n.downcase == @name
+    end
 
     def connection
       W.player_connection_map[self]
