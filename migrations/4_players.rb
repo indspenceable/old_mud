@@ -40,7 +40,7 @@ module Mud
 
       @pending_output = ""
 
-      W.master_players[sym] = self
+      W.create_player(self)
       self.room = W.default_room
       @command_groups = []
 
