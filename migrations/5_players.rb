@@ -7,6 +7,8 @@ module Mud
     attr_accessor :hashed_password, :command_groups
     attr_accessor :hp, :mp, :max_hp, :max_mp
 
+    include HasInventory
+
     #accessor
     def room
       W.rooms[@room]

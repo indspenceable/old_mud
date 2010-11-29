@@ -35,13 +35,6 @@ module Mud
   end
   W = World.instance
 
-  class Player
-    include HasInventory
-  end
-  class Room
-    include HasInventory
-  end
-
   class Item
     def initialize owner
       @@total_items ||= 0
