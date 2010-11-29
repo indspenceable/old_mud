@@ -55,12 +55,15 @@ module Mud module Commands
       end
 
       def player_online actor, name
+        return actor if name == "me"
         W.players.include?(W.find_player(name))
       end
       def player_here actor, name
+        return actor if name == "me"
         actor.room.players.find { |p| p.is_named? name }
       end
       def player actor, name # => player in the game
+        return actor if name == "me"
         W.find_player(name) 
       end
 
