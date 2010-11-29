@@ -20,30 +20,48 @@ module Mud
       new_owner.add_item @id
       @owner = new_owner
     end
-    
+    def id
+      @id
+    end
     def id? id
       id == @id
     end
+
+    #ITEM SPECIFICATION
+    # needs long_display_string
+    # short_display_string
+    # and named?
+
+  end
+
+  #mixin to be a weapon!
+  module Weapon
+    # weapons should have
+    # weapon.hands # => 1 || 2
+    # def actions
   end
 
 
   class StandardItem < Item
-    def initialize owner, display_string, name_list
+    attr_reader :long_display_string, :short_display_string, :names
+    def initialize owner, long_display_string, short_display_string, name_list = []
       super(owner)
-      @display_string = display_string
-      @name_list = name_list
+      @long_display_string = long_display_string
+      @short_display_string = short_display_string
+      @names = name_list
     end
-    def display_string
-      @display_string
-    end
-    def named? n
-      @name_list.include? n
+
+    def named? n; @names.include? n; end
+    def names; @names.dup.freeze; end
+
+    def register name
+      @names << name unless @names.include? name
     end
   end
 
   class Sword < StandardItem
     def initialize owner
-      super(owner, "A faintly glowing sword", ["sword", "blade"])
+      super(owner, "A faintly glowing sword has been discarded here.", "a glowing sword", ["sword", "blade"])
     end
   end
 end
