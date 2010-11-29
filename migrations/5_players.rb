@@ -19,17 +19,25 @@ module Mud
       @room = r.sym
     end
 
+    #the truename of this player
     def sym
       @name.to_sym
     end
+    
+    #the name that this player is usually displayed by.
+    # takes into account their wielding, blah blah blah
     def display_name
       @name.capitalize.freeze
     end
+
+    #this is what they look like in a "look"
     def display_description
       @name.capitalize + " stands here" + ((item_for :weapon) ? (", wielding " + item_for(:weapon).short_display_string) : "") + "."
     end
+
+    # returns if this paleyr is named this string
+    # it also can take care of other cases?
     def is_named? n
-      puts "n is #{n} and i am #{self}"
       n && n.downcase == @name
     end
 
@@ -93,6 +101,9 @@ module Mud
       :blue => "\033[34m"
     }
 
+
+    #hear something - message, color, message, color
+    # this is all followed by a new line
     def hear_line *args
       raise "must give arguments" if args.size == 0
       args << nil if (args.size%2) ==  1
@@ -100,6 +111,7 @@ module Mud
       @pending_output += "\n\r"
     end
 
+    #hear something - message, color, message, color
     def hear *args
       raise "must give arguments" if args.size == 0
       args << nil if (args.size%2) ==  1
@@ -116,8 +128,8 @@ module Mud
         @pending_output += color_attr.map{|a| COLORMAP[a]}.join('')+data+COLORMAP[:off]
       end
     end
-
     private :add_output
+
     # When a player gets input, it might have a shortcut for say.
     # this method will replace a leading ' or " with 'say '
     def preprocess_data data
@@ -128,13 +140,15 @@ module Mud
       end
     end
 
-    # When we receive input, do the command with processed version of that data
+    # When we receive input, do the command with processed version of that
+    # data
     def receive_data data
       command preprocess_data(data), true
     end
 
-    # Run a command. Takes an unparsed string. The command knows if its being run directly from input or
-    # as the result of something else (like, moving invokes player.command "look")
+    # Run a command. Takes an unparsed string. The command knows if its 
+    # being run directly from input or as the result of something else
+    # (like, moving invokes player.command "look")
     def command data, from_input=false
       data.strip!
       return unless data != ""
@@ -164,9 +178,13 @@ module Mud
       end
     end
 
+    # set this player to be unbalanced on a specific type of balance for 
+    # t ticks.
     def unbalance_for balance_type, t
       @off_balance_timer[balance_type] = (@off_balance_timer[balance_type] || 0) + t
     end
+
+    # decrease balances by dt
     def update_balance dt
       @off_balance_timer.keys.each do |k|
         if @off_balance_timer[k] && (@off_balance_timer[k] -= dt) <= 0
@@ -175,10 +193,14 @@ module Mud
         end
       end
     end
+
+    # returns if we have balance on that type of balance
     def on_balance? balance_type
       !@off_balance_timer[balance_type]
     end
 
+
+    #take damage, and show this message to show that.
     def take_damage amt, name, sym, message
       @hp -= amt
       @last_hit_by = name
@@ -223,14 +245,15 @@ module Mud
       end
     end
 
+    #remove all output
     def clear_output
       @pending_output = "" 
     end
 
+    # all the things that should be happening constantly
     def tick dt
       update_balance dt
       flush_output
     end
-
   end
 end
