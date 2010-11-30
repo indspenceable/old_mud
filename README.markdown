@@ -3,6 +3,8 @@
 ## TODO -
 ### Players taking damage
 ### Afflictions
+Afflictions are, essentially, buffs and debuffs. You would be able to assign negative afflictions to your enemies, and get yourself positive buffs. To a certain extent things would need to know about them, but sometimes they could also be selfcontained.
+
 - probably make a "Spell" class. There would be a mixin - has_spells
 - basically, would work almost exactly like items - you would always use the accessor methods
 - maybe, each one could have def process_x -> like process_output, process damage
@@ -12,6 +14,7 @@
 
 ### Mobiles
 So a mobile and a player are both similar. The mob, on one hand, is the same except for 
+
 - identification
     - def sym
     - is_named?
