@@ -16,18 +16,18 @@ Afflictions are, essentially, buffs and debuffs. You would be able to assign neg
 So a mobile and a player are both similar. The mob, on one hand, is the same except for 
 
 - identification
-    `def sym`
-    `is_named?`
+        `def sym`
+        `is_named?`
 - display methods (display_name, display_description)
-    `display_name`
-    `display_description`
+        `display_name`
+        `display_description`
 - On_load (this should be overriden by each mob, probably set up its ai)
-    `def on_load`
+        `def on_load`
 - processing what it sees
-    `controller` ?
-    `receive_data` ?
-    `hear_line`
-    `hear`
+        `controller` ?
+        `receive_data` ?
+        `hear_line`
+        `hear`
 - maybe it will also have a `react_to()`
     - This is actually, great.
 
