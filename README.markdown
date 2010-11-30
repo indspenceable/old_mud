@@ -9,6 +9,7 @@
 - and everything that could be processed could be processed by any applicable spells?
 - or should the methods just be aware of specific spells to begin with.
 - definitely, on ticks, spells should run
+
 ### Mobiles
 So a mobile and a player are both similar. The mob, on one hand, is the same except for 
 - identification
@@ -26,6 +27,8 @@ So a mobile and a player are both similar. The mob, on one hand, is the same exc
     - def hear
 - maybe it will also have a "react_to()"
     - This is actually, great.
+
 ### Item actions
+
 ### Equipment
 - I have some items. You can use the sword as a weapon
