@@ -42,13 +42,17 @@ module Mud
     end
 
     def initialize 
+      initialize_state
+    end
+
+    def initialize_state
       @player_connection_map = {}
       @master_players = {}
       @players = []
       @rooms = {}
       @items = []
+      @mobiles = []
     end
-
 
     # This lets us load up the gamestate. A bunch of info is hashshed into 
     # the yaml file, so we read it into our variables. Of course, when you 
@@ -75,9 +79,7 @@ module Mud
         puts e.backtrace
         puts "************************************************"
         puts 'running the scaffolding script instead.'
-        @master_players = {}
-        @rooms = {}
-        @items = []
+        initialize_state
         Migrator.script('scaffold.rb')
       end
     end
@@ -105,7 +107,7 @@ module Mud
 
     # get the default room, or raise an error if none exists
     def default_room
-      raise "No default room!" unless @default_room
+      raise "no default room" unless @default_room
       rooms[@default_room]
     end
     def default_room= r
