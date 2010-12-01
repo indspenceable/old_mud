@@ -17,12 +17,13 @@ module Mud
       directory = File.join(File.expand_path(File.dirname(__FILE__)),"..","migrations")
       migrations = Dir.entries(directory)
       migrations.reject! do |m|
-        !(/\A(\d)_(.*)\z/.match m)
+        !(/\A(\d*)_(.*)\z/.match m)
       end
       #put each file name in the migration hash.
       migrations.each do |m|
-        @migration_hash[(/\A(\d*)_(.*)\z/.match m)[1].to_i] = m
+        @migration_hash[(/\A([0-9]*)_(.*)\z/.match m)[1].to_i] = m
       end
+      puts @migration_hash.inspect
 
       while @migration_hash.key?(@migration_index + 1)
         require File.join(directory, @migration_hash[@migration_index += 1])
