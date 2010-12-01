@@ -5,6 +5,7 @@ module Mud
     describe HasMobiles do
       describe "the mobiles in this room" do
         before(:all) do
+          W.initialize_state
           (@o = Object.new).extend(HasMobiles)
           @mock_mobile = Mobile.new
         end
@@ -13,8 +14,8 @@ module Mud
         end
         it "should be able to add a mobile" do
           @o.add_mobile(@mock_mobile)
-          @o.find_mobile(Mobile.new).should be nil
           @o.mobiles.size.should be 1
+          puts @o.mobiles.inspect
           @o.mobiles.include?(@mock_mobile).should == true 
         end
         it "should be able to remove a mobile" do

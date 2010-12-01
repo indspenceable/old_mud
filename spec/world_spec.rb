@@ -2,6 +2,9 @@ require 'migrator'
 
 module Mud
   describe "the world right after creation" do
+    before(:all) do
+      W.initialize_state
+    end
     it "shouldn't have anything in it"
 
     it "should get angry if there is no default room; otherwise, return the right room" do

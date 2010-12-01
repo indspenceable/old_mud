@@ -3,6 +3,7 @@ require 'migrator'
 module Mud
   describe Room do
     before(:all) do
+      W.initialize_state
       @r  = Room.new(:test, "test_name", "this is the test room")
       @r2 = Room.new(:test2, "test2_name", "this is the second test room")
       @r3 = Room.new(:test3, "test3_name", "this is the third test room")
