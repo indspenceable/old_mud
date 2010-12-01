@@ -18,6 +18,9 @@ EventMachine::run do
     Mud::W.players.each do |p|
       p.tick dt
     end
+    Mud::W.mobiles.each do |m|
+      m.tick dt if m
+    end
     last_time = Time.now.to_f * 100
   end
 end
