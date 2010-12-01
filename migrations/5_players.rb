@@ -1,8 +1,4 @@
 module Mud
-  module Errors
-  end
-
-  # A mapping of color symbols to their escape sequences.
   COLORMAP = {
     :off => "\033[0m",
     :bold => "\033[1m",
@@ -20,6 +16,11 @@ module Mud
     def room= r
       @room = r.sym
     end
+
+    def move_to new_room
+      raise "Need to define move_to"
+    end
+
   end
 
   module DoesCommands
@@ -104,8 +105,42 @@ module Mud
     include HasInventory
   end
 
+  module HasPlayers
+    #retrieving the items from this character
+    def find_player p
+      players.find{|cp| p == cp}
+    end
+    def players
+      (@players ||= []).map{|id| puts "ID IS #{id}"; W.find_player id}.freeze
+    end
+
+    #moving players around.
+    #let players do this
+    def remove_player p
+      (@players ||= []).delete p.sym
+    end
+    def add_player p
+      @players << p.sym unless (@players ||= []).include? p.sym
+    end
+
+    #echo
+    def echo string, list_of_players_to_avoid = [], color = :off
+      (self.players - list_of_players_to_avoid).each { |p| p.hear_line string, color }
+    end
+  end
+
+  # A mapping of color symbols to their escape sequences.
   class Player < Entity
     attr_accessor :hashed_password, :command_groups
+
+    # we don't need this, but it needs to be able to do this just in case.
+    def react_to *args; end
+
+    def move_to new_room
+      self.room.remove_player self
+      self.room = new_room 
+      new_room.add_player self
+    end
 
     #the truename of this player
     def sym
@@ -195,6 +230,7 @@ module Mud
         add_output(args[2*off], args[2*off+1])
       end
     end
+    private :hear
     # Hear is the method for producing output.
     def add_output data, color_attr = nil
       color_attr ||= []
@@ -267,6 +303,36 @@ module Mud
       flush_output
     end
   end
+
+
+  module HasMobiles
+    #retrieving the items from this character
+    def find_mobile p
+      mobiles.find{|cp| p == cp}
+    end
+    def mobiles
+      (@mobiles ||= []).map{|id| W.mobiles[id]}.freeze
+    end
+
+    #moving players around.
+    #let players do this
+    def remove_mobile p
+      (@mobiles ||= []).delete p.sym
+    end
+    def add_mobile p
+      @mobiles << p.sym unless (@mobiles ||= []).include? p.sym
+    end
+
+    #trigger reactions
+    def trigger_reaction reaction_type, actor, *args
+      mobiles.each do |m|
+        m.react_to(reaction_type, actor, *args)
+      end
+    end
+  end
+
+  # A mapping of color symbols to their escape sequences.
+
   class Mobile < Entity
     attr_reader :id
     def initialize
@@ -274,8 +340,22 @@ module Mud
       @@blank_ids ||= []
       @id = @@blank_ids.pop
       @id ||= (@@total_items += 1)
+
+      @off_balance_timer = {}
+    end
+    def sym
+      @id
+    end
+    def move_to new_room
+      self.room.remove_mobile self
+      self.room = new_room 
+      new_room.add_mobile self
     end
     def hear_line *args; end
+    def react_to reaction_type, actor, *args
+      method = ("react_to_" + reaction_type.to_s).to_sym
+      send(method, actor, *args) if respond_to? method
+    end
   end
   class Guy < Mobile
     def initialize r
@@ -283,6 +363,17 @@ module Mud
       self.room = r
       room.add_mobile self
       W.mobiles[@id] = self
+
+      my_sword = Sword.new(self)
+      self.set_item :weapon, my_sword
+
+      @hp = 30
+      @max_hp = 30
+
+      @hostile = {}
+    end
+    def is_named? n
+      n == "guy"
     end
     def display_description
       "a guys is standing here, looking nonchalant."
@@ -291,7 +382,31 @@ module Mud
       "an unassuming guy"
     end
     def react_to_say actor, args
-      command("say Hello, world!", [:global]) if args =~ /[Hh]ello/ && actor.is_a?(Player)
+      command("say Hello, world!") if args =~ /[Hh]ello/ && actor.is_a?(Player)
+    end
+    def react_to_attack actor
+      command("say My word! You will die for your insolence!") unless hostile?
+      @hostile[actor.sym] = 3000
+    end
+    def hostile?
+      @hostile.size > 0
+    end
+    def update_hostility dt
+      @hostile.each_pair do |k,v|
+        @hostile[k] = v-dt
+      end
+      @hostile.reject! { |k,v| v <=0 }
+    end
+
+    def tick dt
+      update_balance dt
+      update_hostility dt
+      #get the person they are most hostile to
+      if @hostile.size > 0 && on_balance?(:all)
+        target = @hostile.to_a.sort{|l,r| r[1] <=> l[1]}[0][0]
+        command("say hyaah!")
+        command("swing #{target}")
+      end
     end
   end
 end

@@ -344,8 +344,12 @@ module Mud
       def enact player, args
         require_balance player
         args = args.split(' ')
-        return player.room.leave_to(player,args[0]).arrive_from(player,args[0]) if player.room.has_exit?(args[0])
-        player.hear_line "You can't go in that direction!"
+        if player.room.has_exit?(args[0])
+          player.room.leave_to(player,args[0])
+          player.command('look')
+        else
+          player.hear_line "You can't go in that direction!"
+        end
       end
     end
     CommandList[:global] << Move.new
@@ -374,13 +378,16 @@ module Mud
       end
       def enact player, args
         if (w = player.item_for :weapon)
-          target, = process player, args, [:player_here]
+          target, = process player, args, [[:player_here, :mobile_here]]
+          puts "target is #{target}"
           if target
             return player.hear_line "You can't attack yourself!" if target == player
+            player.unbalance_for :balance, 500
             power =(w.respond_to?(:weapon_power)? w.weapon_power : 3)
             target.take_damage power, player.sym, :swords, "#{player.display_name} swings #{w.short_display_string} at you visciously."
             player.room.echo "#{player.display_name} swings #{w.short_display_string} at #{target.display_name} visciously.", [player, target]
             player.hear_line "You swing #{w.short_display_string} at #{target.display_name} visciously."
+            target.react_to :attack, player
           else
             player.hear_line "Swing at what?"
           end

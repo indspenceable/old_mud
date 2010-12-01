@@ -30,10 +30,11 @@ module Mud
         rtn = []
         types.length.times do |i|
           if types[i].is_a? Symbol
-            rtn << self.send(types[i], actor, l[i]) if types[i].is_a? Symbol
-            #rtn << self.send(:check_type, actor, l[i]) if types[i].is_a?(Symbol)
+            rtn << self.send(types[i], actor, l[i])
           else
-            rtn << types[i].find { |j| self.send(j, actor, l[i]) }
+            puts "ITS A LIST"
+            rtn << self.send(types[i].find{ |j| self.send(j, actor, l[i]) }, actor, l[i])
+            puts rtn.inspect
           end
         end
         rtn
@@ -46,6 +47,10 @@ module Mud
         actor.room.has_exit? name
       end
 
+      def mobile_here actor, name
+        return actor.room.mobiles.find{|m| m.is_named? name }
+      end
+
       def item actor, name
         actor.find_item(name) || actor.room.find_item(name)
       end
@@ -55,7 +60,6 @@ module Mud
       def item_from_room actor, name
         actor.room.find_item name
       end
-
       def player_online actor, name
         return actor if name == "me"
         W.players.include?(W.find_player(name))
