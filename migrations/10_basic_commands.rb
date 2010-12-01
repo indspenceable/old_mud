@@ -97,7 +97,7 @@ module Mud
         super("shutdown",[])
       end
       def enact player, args
-        player.disconnect
+        EventMachine.stop_event_loop
       end
     end
     CommandList[:admin] << Shutdown.new
