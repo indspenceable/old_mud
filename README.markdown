@@ -30,6 +30,7 @@ So a mobile and a player are both similar. The mob, on one hand, is the same exc
         hear
 - maybe it will also have a `react_to()`
     - This is actually, great.
+    - room.trigger_reaction takes care of this
 
 ### Item actions
 
