@@ -53,6 +53,7 @@ module Mud
       @rooms = {}
       @items = []
       @mobiles = []
+      @default_room = nil
     end
 
     # This lets us load up the gamestate. A bunch of info is hashshed into 

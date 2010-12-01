@@ -39,6 +39,7 @@ module Mud
         @id ||= (@@total_items += 1)
 
         @off_balance_timer = {}
+        W.mobiles[@id] = self
       end
       def sym
         @id
