@@ -4,8 +4,6 @@ module Mud
     attr_accessor :name, :description
 
     include HasInventory
-
-
     #players
     def players
       @players.map{|n| W.find_player(n) }.freeze
