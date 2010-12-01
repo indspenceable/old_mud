@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
 
 require 'eventmachine'
-require './migrations/migrator.rb'
+require './lib/migrator.rb'
 
 EventMachine::run do
   host = '0.0.0.0'
   port = 8080
-  Mud::Migrator.migrate
+  #Mud::Migrator.migrate
   Mud::W.load_state
 
   last_time = Time.now.to_f * 100

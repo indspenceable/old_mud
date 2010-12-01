@@ -76,7 +76,7 @@ module Mud
         initialize @connection
       else
         @connection.send_line "Congratulations! You now exist. Pretty cool!"
-        pl = Player.new(@player_name,Digest::MD5.hexdigest(data))
+        pl = Entities::Player.new(@player_name,Digest::MD5.hexdigest(data))
         pl.connection = @connection
         pl.login
         @connection.delegate = pl

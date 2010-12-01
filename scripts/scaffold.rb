@@ -6,7 +6,7 @@ module Mud
   W.add_room r1
   W.add_room r2
   W.default_room = r1
-  p = Player.new "danny", Digest::MD5.hexdigest('danny')
+  p = Entities::Player.new "danny", Digest::MD5.hexdigest('danny')
   p.command_groups << :admin
   p.command_groups << :builder
 end

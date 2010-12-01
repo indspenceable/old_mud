@@ -4,8 +4,8 @@ module Mud
     attr_accessor :name, :description
 
     include HasInventory
-    include HasPlayers
-    include HasMobiles
+    include Entities::HasPlayers
+    include Entities::HasMobiles
 
     def initialize symbol, name, description
       @sym = symbol
