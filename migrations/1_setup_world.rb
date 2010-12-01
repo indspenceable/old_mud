@@ -52,7 +52,7 @@ module Mud
       @players = []
       @rooms = {}
       @items = []
-      @mobiles = {}
+      @mobiles = []
     end
 
     # This lets us load up the gamestate. A bunch of info is hashshed into 
@@ -112,6 +112,7 @@ module Mud
       rooms[@default_room]
     end
     def default_room= r
+      raise "default room must be in game" unless @rooms[r.sym]
       @default_room = r.sym
     end
 
@@ -120,11 +121,11 @@ module Mud
       @rooms[r.sym] = r
     end
 
-    def each_room
-      @rooms.each_pair do |n,r|
-        yield r
-      end
-    end
+#    def each_room
+#      @rooms.each_pair do |n,r|
+#        yield r
+#      end
+#    end
   end
   W = World.instance
 end
