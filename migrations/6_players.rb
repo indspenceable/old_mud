@@ -1,15 +1,15 @@
 module Mud
   module Entities
     module HasPlayers
+      #find a player by its identification.
+      def find_player name
+        players.find{|p| p.is_named? name}
+      end
 
       #retrieving the items from this character
-      def find_player p
-        players.find{|cp| p == cp}
-      end
       def players
         (@players ||= []).map{|id| W.find_player id}.freeze
       end
-
       #moving players around.
       #let players do this
       def remove_player p

@@ -1,10 +1,12 @@
 module Mud
   module Entities
     module HasMobiles
-      #retrieving the items from this character
-      def find_mobile p
-        mobiles.find{|cp| p == cp}
+      #find a mobile by some sort of identification
+      def find_mobile name
+        mobiles.find{|m| m.is_named? name}
       end
+
+      #retrieving the items from this character
       def mobiles
         (@mobiles ||= []).map{|id| W.mobiles[id]}.freeze
       end
