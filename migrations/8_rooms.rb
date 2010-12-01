@@ -5,6 +5,7 @@ module Mud
 
     include HasInventory
 
+
     #players
     def players
       @players.map{|n| W.find_player(n) }.freeze
@@ -16,11 +17,22 @@ module Mud
       @players.delete(p.sym)
     end
 
+    def mobiles
+      @mobiles.map{|id| W.mobiles[id]}.freeze
+    end
+    def add_mobile m
+      @mobiles << m.id
+    end
+    def remove_mobile m
+      @mobiles.delete m.id
+    end
+
     def initialize symbol, name, description
       @sym = symbol
       @name = name
       @description = description
       @players = []
+      @mobiles = []
       @exits = {}
     end
 
@@ -97,18 +109,31 @@ module Mud
     def echo string, list_of_players_to_avoid = [], color = :off
       (self.players - list_of_players_to_avoid).each { |p| p.hear_line string, color }
     end
+    
+    def trigger_reaction reaction_type, actor, *args
+      method = ("react_to_" + reaction_type.to_s).to_sym
+      mobiles.each do |m|
+        puts "MOBILE #{m}"
+        puts "method is #{method} and m reacts? #{m.respond_to? method}"
+        m.send(method, actor, *args) if m.respond_to? method
+      end
+    end
 
     def leave_to player, direction
-      remove_player player
+      remove_player player if player.is_a? Player
+      remove_mobile player if player.is_a? Mobile
       echo "#{player.display_name} leaves to the #{normalize_direction direction}"
       dest direction
     end
 
     def arrive_from player,direction
       echo "#{player.display_name} enters from the #{INVERSES[normalize_direction direction]}"
-      add_player player
-      player.room = self
-      player.command "look"
+      add_mobile player if player.is_a? Mobile
+      if player.is_a? Player
+        add_player player 
+        player.room = self
+        player.command "look"
+      end
     end
   end
 end

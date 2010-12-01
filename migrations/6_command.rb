@@ -1,4 +1,5 @@
-module Mud module Commands
+module Mud 
+  module Commands
     #If a command doesn't override enact, it throws "command not implemented"
     class CommandNotImplementedError < RuntimeError; end
 
@@ -21,7 +22,7 @@ module Mud module Commands
       #this Raises a NoBalanceError (which is caught by player.command)
       # if the player is offbalance
       def require_balance player, type = :balance
-        raise Errors::NoBalanceError.new unless player.on_balance? type
+        raise HasBalance::NoBalanceError.new unless player.on_balance? type
       end
 
       def process actor, args, types
@@ -29,7 +30,8 @@ module Mud module Commands
         rtn = []
         types.length.times do |i|
           if types[i].is_a? Symbol
-            rtn << self.send(types[i], actor, l[i])
+            rtn << self.send(types[i], actor, l[i]) if types[i].is_a? Symbol
+            #rtn << self.send(:check_type, actor, l[i]) if types[i].is_a?(Symbol)
           else
             rtn << types[i].find { |j| self.send(j, actor, l[i]) }
           end

@@ -38,10 +38,8 @@ module Mud
       end
       def enact player, args
         player.room.echo "#{player.display_name} says: \"#{args}\"", [player]
-        #player.items.each do |i|
-        #  i.hear args if i.respond_to?(:hear)
-        #end
         player.hear_line "You say: \"#{args}\""
+        player.room.trigger_reaction :say, player, args
       end
     end
     CommandList[:global] << Say.new
@@ -55,7 +53,8 @@ module Mud
         if args == ""
           player.hear_line player.room.name, :yellow
           player.hear_line(player.room.description + " ", nil,
-                           player.room.players.reject{|p| p == player}.map{|p| p.display_description }.join(", ") + " ", :blue,
+                           player.room.players.reject{|p| p == player}.map{|p| p.display_description.capitalize }.join(" ") + " ", :blue,
+                           player.room.mobiles.map{ |m| m.display_description.capitalize }.join(" ") + " ", nil,
                            (Mud::list_array player.room.items.map{|i| i.long_display_string}) + " ", nil)
           player.hear_line(player.room.exits_string, :yellow)
         else

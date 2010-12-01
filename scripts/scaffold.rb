@@ -10,6 +10,8 @@ module Mud
   p.command_groups << :admin
   p.command_groups << :builder
 
+  m = Guy.new r1
+
   Sword.new(p)
 
 end

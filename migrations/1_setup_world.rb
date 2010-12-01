@@ -28,6 +28,7 @@ module Mud
     include Singleton
     attr_reader :players, :items
     attr_accessor :player_connection_map
+    attr_reader :mobiles
 
     def rooms
       @rooms.dup.freeze
@@ -51,7 +52,7 @@ module Mud
       @players = []
       @rooms = {}
       @items = []
-      @mobiles = []
+      @mobiles = {}
     end
 
     # This lets us load up the gamestate. A bunch of info is hashshed into 
@@ -125,5 +126,6 @@ module Mud
       end
     end
   end
+  W = World.instance
 end
 

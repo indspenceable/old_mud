@@ -1,29 +1,117 @@
 module Mud
   module Errors
-    class NoBalanceError < Exception
-    end
   end
-  class Player
-    attr_accessor :hashed_password, :command_groups
-    attr_accessor :hp, :mp, :max_hp, :max_mp
 
-    include HasInventory
-
+  # A mapping of color symbols to their escape sequences.
+  COLORMAP = {
+    :off => "\033[0m",
+    :bold => "\033[1m",
+    :red => "\033[31m",
+    :green => "\033[32m",
+    :yellow => "\033[33m",
+    :blue => "\033[34m"
+  }
+  module HasRoom
     #accessor
     def room
       W.rooms[@room]
     end
-
     #setter
     def room= r
       @room = r.sym
     end
+  end
+
+  module DoesCommands
+    # This error is raised if you don't have balance and try to do a move that requires balance
+    class NoBalanceError < Exception; end
+    # Run a command. Takes an unparsed string. The command knows if its 
+    # being run directly from input or as the result of something else
+    # (like, moving invokes player.command "look")
+    def command data, command_groups=[:global], from_input=false
+      data.strip!
+      return unless data != ""
+      command_name,args = data.split(' ', 2)
+      # if args is nil, lets make it a string.
+      args ||= ""
+
+      # either - is there a command?
+      # or, there is an exit in this room/a standard exit by that name.
+      # elsewise, "you can't do that."
+      begin
+        if com = Commands::find_command(command_name, command_groups) 
+          com.enact(self, args)
+        elsif room.has_exit?(command_name)|| (Room::DIRS.keys + Room::DIRS.values).include?(command_name.to_sym)
+          Commands::find_command("move", [:global]).enact(self,data)
+          #room.leave_to(self,command_name).arrive_from(self,command_name)
+        else
+          hear_line "You can't do that!"
+        end
+      rescue NoBalanceError => e
+        hear_line "You can't do that off balance."
+      rescue Exception => e
+        hear_line "You've triggered an uncaught exception. Please report this to the mud...."
+        puts "There has been an uncaught exception, triggered by #{display_name} trying to do a command with #{data}"
+        puts "It raised #{e} at"
+        puts e.backtrace
+      end
+    end
+  end
+  module HasBalance
+    # set this player to be unbalanced on a specific type of balance for 
+    # t ticks.
+    def unbalance_for balance_type, t
+      @off_balance_timer[balance_type] = (@off_balance_timer[balance_type] || 0) + t
+    end
+
+    # decrease balances by dt
+    def update_balance dt
+      @off_balance_timer.keys.each do |k|
+        if @off_balance_timer[k] && (@off_balance_timer[k] -= dt) <= 0
+          hear_line "You have regained #{k.to_s}"
+          @off_balance_timer[k] = nil
+        end
+      end
+    end
+
+    # returns if we have balance on that type of balance
+    def on_balance? balance_type
+      return !@off_balance_timer.values.find{|v| v} if balance_type == :all
+      !@off_balance_timer[balance_type]
+    end
+  end
+  module HasHealth
+    attr_accessor :hp, :max_hp
+    #take damage, and show this message to show that.
+    def take_damage amt, name, sym, message
+      @hp -= amt
+      @last_hit_by = name
+      @kill_type = sym
+      hear_line message
+      # check if you died?
+    end
+  end
+  module HasMana
+    attr_accessor :mp, :max_mp
+  end
+
+  class Entity
+    include DoesCommands
+    include HasRoom
+    include HasBalance
+    include HasHealth
+    include HasMana
+    include HasInventory
+  end
+
+  class Player < Entity
+    attr_accessor :hashed_password, :command_groups
 
     #the truename of this player
     def sym
       @name.to_sym
     end
-    
+
     #the name that this player is usually displayed by.
     # takes into account their wielding, blah blah blah
     def display_name
@@ -91,17 +179,6 @@ module Mud
       W.players.delete(self)
     end
 
-    # A mapping of color symbols to their escape sequences.
-    COLORMAP = {
-      :off => "\033[0m",
-      :bold => "\033[1m",
-      :red => "\033[31m",
-      :green => "\033[32m",
-      :yellow => "\033[33m",
-      :blue => "\033[34m"
-    }
-
-
     #hear something - message, color, message, color
     # this is all followed by a new line
     def hear_line *args
@@ -110,7 +187,6 @@ module Mud
       hear *args
       @pending_output += "\n\r"
     end
-
     #hear something - message, color, message, color
     def hear *args
       raise "must give arguments" if args.size == 0
@@ -119,7 +195,6 @@ module Mud
         add_output(args[2*off], args[2*off+1])
       end
     end
-
     # Hear is the method for producing output.
     def add_output data, color_attr = nil
       color_attr ||= []
@@ -143,70 +218,7 @@ module Mud
     # When we receive input, do the command with processed version of that
     # data
     def receive_data data
-      command preprocess_data(data), true
-    end
-
-    # Run a command. Takes an unparsed string. The command knows if its 
-    # being run directly from input or as the result of something else
-    # (like, moving invokes player.command "look")
-    def command data, from_input=false
-      data.strip!
-      return unless data != ""
-      command_name,args = data.split(' ', 2)
-      # if args is nil, lets make it a string.
-      args ||= ""
-      
-      # either - is there a command?
-      # or, there is an exit in this room/a standard exit by that name.
-      # elsewise, "you can't do that."
-      begin
-        if com = Commands::find_command(command_name, @command_groups) 
-          com.enact(self, args)
-        elsif room.has_exit?(command_name)|| (Room::DIRS.keys + Room::DIRS.values).include?(command_name.to_sym)
-          Commands::find_command("move", @command_groups).enact(self,data)
-          #room.leave_to(self,command_name).arrive_from(self,command_name)
-        else
-          hear_line "You can't do that!"
-        end
-      rescue Errors::NoBalanceError => e
-        hear_line "You can't do that off balance."
-      rescue Exception => e
-        hear_line "You've triggered an uncaught exception. Please report this to the mud...."
-        puts "There has been an uncaught exception, triggered by #{display_name} trying to do a command with #{data}"
-        puts "It raised #{e} at"
-        puts e.backtrace
-      end
-    end
-
-    # set this player to be unbalanced on a specific type of balance for 
-    # t ticks.
-    def unbalance_for balance_type, t
-      @off_balance_timer[balance_type] = (@off_balance_timer[balance_type] || 0) + t
-    end
-
-    # decrease balances by dt
-    def update_balance dt
-      @off_balance_timer.keys.each do |k|
-        if @off_balance_timer[k] && (@off_balance_timer[k] -= dt) <= 0
-          hear_line "You have regained #{k.to_s}"
-          @off_balance_timer[k] = nil
-        end
-      end
-    end
-
-    # returns if we have balance on that type of balance
-    def on_balance? balance_type
-      !@off_balance_timer[balance_type]
-    end
-
-
-    #take damage, and show this message to show that.
-    def take_damage amt, name, sym, message
-      @hp -= amt
-      @last_hit_by = name
-      @kill_type = sym
-      hear_line message
-      # check if you died?
+      command preprocess_data(data), @command_groups, true
     end
 
     #generates a prompt string.
@@ -233,7 +245,6 @@ module Mud
       hear("#{hp}/#{max_hp} ", [hp_color], 
            "#{mp}/#{max_mp}", [mp_color], 
            " #{on_balance?(:balance) ? "x" : " "}#{on_balance?(:equilibrium) ? "e" : " "}-", nil)
-
     end
 
     #this allows simultanious output to be batched together in the same package.
@@ -254,6 +265,33 @@ module Mud
     def tick dt
       update_balance dt
       flush_output
+    end
+  end
+  class Mobile < Entity
+    attr_reader :id
+    def initialize
+      @@total_items ||= 0
+      @@blank_ids ||= []
+      @id = @@blank_ids.pop
+      @id ||= (@@total_items += 1)
+    end
+    def hear_line *args; end
+  end
+  class Guy < Mobile
+    def initialize r
+      super()
+      self.room = r
+      room.add_mobile self
+      W.mobiles[@id] = self
+    end
+    def display_description
+      "a guys is standing here, looking nonchalant."
+    end
+    def display_name
+      "an unassuming guy"
+    end
+    def react_to_say actor, args
+      command("say Hello, world!", [:global]) if args =~ /[Hh]ello/ && actor.is_a?(Player)
     end
   end
 end

@@ -33,7 +33,6 @@ module Mud
       end
     end
   end
-  W = World.instance
 
   class Item
     def initialize owner
