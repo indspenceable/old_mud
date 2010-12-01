@@ -13,7 +13,6 @@ module Mud
         end
         it "should be able to add a mobile" do
           @o.add_mobile(@mock_mobile)
-          @o.find_mobile(@mock_mobile).should be @mock_mobile
           @o.find_mobile(Mobile.new).should be nil
           @o.mobiles.size.should be 1
           @o.mobiles.include?(@mock_mobile).should == true 
@@ -22,7 +21,6 @@ module Mud
           @o.remove_mobile(@mock_mobile)
           @o.mobiles.size.should be 0
           @o.mobiles.include?(@mock_mobile).should == false
-          @o.find_mobile(@mock_mobile).should be nil
         end
       end
     end
