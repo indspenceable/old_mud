@@ -27,6 +27,9 @@ module Mud
         W.items[id]
       end
     end
+    def slot_for item
+      @item_slots.to_a.find{|v| v[1] == item.id}[0]
+    end
     def remove_from_all_slots id
       (@item_slots ||= {}).each_pair do |k,v|
         @item_slots[k] = nil if v == id
