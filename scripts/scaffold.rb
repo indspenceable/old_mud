@@ -9,4 +9,7 @@ module Mud
   p = Entities::Player.new "danny", Digest::MD5.hexdigest('danny')
   p.command_groups << :admin
   p.command_groups << :builder
+
+  Entities::Rat.new(r1)
+  Items::Dagger.new(p)
 end
