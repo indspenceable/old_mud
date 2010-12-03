@@ -271,132 +271,156 @@ module Mud
         super "inventory", ["inv", "i", "ii"]
       end
       def enact player, args
-        player.hear_line Mud::list_array(player.items.map{|i| i.short_display_string}, "You are carrying nothing.").capitalize
-      end
-    end
-    CommandList[:global] << Inventory.new
-
-    class Examine < Command
-      def initialize
-        super "examine", ["probe","check"]
-      end
-      def enact player, args
-        looking_at, = process player, args, [[:player_here, :item]]
-        return player.hear_line "yes, that is here." if looking_at
-        player.hear_line "No that is not here."
-      end
-    end
-    CommandList[:global] << Examine.new
-
-    class RoomList < Command
-      def initialize
-        super "roomlist", ["rl"]
-      end
-      def enact player, args
-        player.hear_line "Room list:"
-        W.rooms.each_pair do |k,v|
-          player.hear_line "\t#{k.to_s}"
+        player.hear_line Mud::list_array(player.items.map do |i| 
+          slot = player.slot_for i
+          i.short_display_string + 
+            if slot
+              slot.to_s
+            else
+              ""
+            end
+        end, "You are carrying nothing.").capitalize
         end
       end
-    end
-    CommandList[:admin] << RoomList.new
+      CommandList[:global] << Inventory.new
 
-    class Drop < Command
-      def initialize
-        super "drop", []
-      end
-      def enact player, args
-        require_balance player
-        to_drop, = process player, args, [:item_from_inventory]
-        if to_drop
-          to_drop.move_to player.room
-          player.room.echo "#{player.display_name} drops #{to_drop.short_display_string}", [player]
-          player.hear_line "You drop #{to_drop.short_display_string}"
-        else
-          player.hear_line "You don't have that."
+      class Examine < Command
+        def initialize
+          super "examine", ["probe","check"]
+        end
+        def enact player, args
+          looking_at, = process player, args, [[:player_here, :item]]
+          return player.hear_line "yes, that is here." if looking_at
+          player.hear_line "No that is not here."
         end
       end
-    end
-    CommandList[:global] << Drop.new
+      CommandList[:global] << Examine.new
 
-    class Get < Command
-      def initialize
-        super "get", ["take"]
-      end
-      def enact player, args
-        require_balance player
-        to_get, = process player, args, [:item_from_room]
-        if to_get
-          to_get.move_to player
-          player.room.echo "#{player.display_name} gets #{to_get.short_display_string}", [player]
-          player.hear_line "You get #{to_get.short_display_string}"
-        else
-          player.hear_line "You don't see that."
+      class RoomList < Command
+        def initialize
+          super "roomlist", ["rl"]
         end
-      end
-    end
-    CommandList[:global] << Get.new
-
-    class Move < Command
-      def initialize
-        super("move", ["take"])
-      end
-      def enact player, args
-        require_balance player
-        args = args.split(' ')
-        if player.room.has_exit?(args[0])
-          player.room.leave_to(player,args[0])
-          player.command('look')
-        else
-          player.hear_line "You can't go in that direction!"
-        end
-      end
-    end
-    CommandList[:global] << Move.new
-
-    class Wield < Command
-      def initialize
-        super("wield", [])
-      end
-      def enact player, args
-        require_balance player
-        to_wield, = process player, args, [:item_from_inventory]
-        if to_wield
-          player.set_item :weapon, to_wield
-          player.room.echo "#{player.display_name} wields #{to_wield.short_display_string}.", [player]
-          player.hear_line "You begin to wield #{to_wield.short_display_string}"
-        else
-          player.hear_line "You don't have that."
-        end
-      end
-    end
-    CommandList[:global] << Wield.new
-
-    class Swing < Command
-      def initialize
-        super("swing", [])
-      end
-      def enact player, args
-        if (w = player.item_for :weapon)
-          target, = process player, args, [[:player_here, :mobile_here]]
-          puts "target is #{target}"
-          if target
-            return player.hear_line "You can't attack yourself!" if target == player
-            player.unbalance_for :balance, 500
-            power =(w.respond_to?(:weapon_power)? w.weapon_power : 3)
-            target.take_damage power, player.sym, :swords, "#{player.display_name} swings #{w.short_display_string} at you visciously."
-            player.room.echo "#{player.display_name} swings #{w.short_display_string} at #{target.display_name} visciously.", [player, target]
-            player.hear_line "You swing #{w.short_display_string} at #{target.display_name} visciously."
-            target.react_to :attack, player
-          else
-            player.hear_line "Swing at what?"
+        def enact player, args
+          player.hear_line "Room list:"
+          W.rooms.each_pair do |k,v|
+            player.hear_line "\t#{k.to_s}"
           end
-        else
-          player.hear_line "You need a weapon equipped to do that!"
         end
       end
-    end
-    CommandList[:global] << Swing.new
+      CommandList[:admin] << RoomList.new
+
+      class Drop < Command
+        def initialize
+          super "drop", []
+        end
+        def enact player, args
+          require_balance player
+          to_drop, = process player, args, [:item_from_inventory]
+          if to_drop
+            to_drop.move_to player.room
+            player.room.echo "#{player.display_name} drops #{to_drop.short_display_string}", [player]
+            player.hear_line "You drop #{to_drop.short_display_string}"
+          else
+            player.hear_line "You don't have that."
+          end
+        end
+      end
+      CommandList[:global] << Drop.new
+
+      class Get < Command
+        def initialize
+          super "get", ["take"]
+        end
+        def enact player, args
+          require_balance player
+          to_get, = process player, args, [:item_from_room]
+          if to_get
+            to_get.move_to player
+            player.room.echo "#{player.display_name} gets #{to_get.short_display_string}", [player]
+            player.hear_line "You get #{to_get.short_display_string}"
+          else
+            player.hear_line "You don't see that."
+          end
+        end
+      end
+      CommandList[:global] << Get.new
+
+      class Move < Command
+        def initialize
+          super("move", ["take"])
+        end
+        def enact player, args
+          require_balance player
+          args = args.split(' ')
+          if player.room.has_exit?(args[0])
+            player.room.leave_to(player,args[0])
+            player.command('look')
+          else
+            player.hear_line "You can't go in that direction!"
+          end
+        end
+      end
+      CommandList[:global] << Move.new
+
+      class Wield < Command
+        def initialize
+          super("wield", [])
+        end
+        def enact player, args
+          require_balance player
+          to_wield, = process player, args, [:item_from_inventory]
+          if to_wield
+            player.set_item :weapon, to_wield
+            player.room.echo "#{player.display_name} wields #{to_wield.short_display_string}.", [player]
+            player.hear_line "You begin to wield #{to_wield.short_display_string}"
+          else
+            player.hear_line "You don't have that."
+          end
+        end
+      end
+      CommandList[:global] << Wield.new
+
+      class Punch < Command
+        def initialize
+          super("punch", [])
+        end
+        def enact player, args
+          target, = process player, args, [[:player_here, :mobile_here]]
+          if target
+            player.unbalance_for :balance, 100
+            power = 20
+            target.take_damage power, player.sym, :punch, "#{player.display_name} punches you visciously."
+            player.room.echo "#{player.display_name} punches #{target.display_name} visciously.", [player, target]
+            player.hear_line "You punch #{target.display_name} visciously."
+            target.react_to :attack, player
+          end
+        end
+      end
+      CommandList[:global] << Punch.new
+      class Swing < Command
+        def initialize
+          super("swing", [])
+        end
+        def enact player, args
+          if (w = player.item_for :weapon)
+            target, = process player, args, [[:player_here, :mobile_here]]
+            if target
+              return player.hear_line "You can't attack yourself!" if target == player
+              player.unbalance_for :balance, 500
+              power =(w.respond_to?(:weapon_power)? w.weapon_power : 3)
+              target.take_damage power, player.sym, :swords, "#{player.display_name} swings #{w.short_display_string} at you visciously."
+              player.room.echo "#{player.display_name} swings #{w.short_display_string} at #{target.display_name} visciously.", [player, target]
+              player.hear_line "You swing #{w.short_display_string} at #{target.display_name} visciously."
+              target.react_to :attack, player
+            else
+              player.hear_line "Swing at what?"
+            end
+          else
+            player.hear_line "You need a weapon equipped to do that!"
+          end
+        end
+      end
+      CommandList[:global] << Swing.new
 
   end
 end
