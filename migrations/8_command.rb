@@ -32,9 +32,7 @@ module Mud
           if types[i].is_a? Symbol
             rtn << self.send(types[i], actor, l[i])
           else
-            puts "ITS A LIST"
             rtn << self.send(types[i].find{ |j| self.send(j, actor, l[i]) }, actor, l[i])
-            puts rtn.inspect
           end
         end
         rtn
@@ -43,12 +41,16 @@ module Mud
       def room actor, name
         W.rooms[name.to_sym]
       end
-      def exit actor, name
-        actor.room.has_exit? name
+
+      def entity_here actor, name
+        p = actor.room.find_player name
+        return p if p
+        actor.room.find_mobile name
       end
 
       def mobile_here actor, name
-        return actor.room.mobiles.find{|m| m.is_named? name }
+        #return actor.room.mobiles.find{|m| m.is_named? name }
+        actor.room.find_mobile name
       end
 
       def item actor, name
@@ -62,11 +64,13 @@ module Mud
       end
       def player_online actor, name
         return actor if name == "me"
-        W.players.include?(W.find_player(name))
+        return W.find_player(name) if W.players.include?(W.find_player(name))
+        nil
       end
       def player_here actor, name
         return actor if name == "me"
-        actor.room.players.find { |p| p.is_named? name }
+        #actor.room.players.find { |p| p.is_named? name }
+        actor.room.find_player name
       end
       def player actor, name # => player in the game
         return actor if name == "me"
