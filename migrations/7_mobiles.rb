@@ -32,7 +32,7 @@ module Mud
 
     class Mobile < Entity
       attr_reader :id
-      def initialize
+      def initialize room
         @@total_items ||= 0
         @@blank_ids ||= []
         @id = @@blank_ids.pop
@@ -40,6 +40,9 @@ module Mud
 
         @off_balance_timer = {}
         W.mobiles[@id] = self
+
+        self.room = room
+        self.room.add_mobile self
       end
       def sym
         @id
