@@ -174,7 +174,7 @@ module Mud
                    else
                      :red
                    end
-        hear("#{hp}/#{max_hp} ", [hp_color], 
+        hear_line("#{hp}/#{max_hp} ", [hp_color], 
            "#{mp}/#{max_mp}", [mp_color], 
            " #{on_balance?(:balance) ? "x" : " "}#{on_balance?(:equilibrium) ? "e" : " "}-", nil)
       end
