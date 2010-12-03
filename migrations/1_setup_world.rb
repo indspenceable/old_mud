@@ -71,7 +71,7 @@ module Mud
         yml = YAML.load_file(File.join(directory,load_from))
         puts "Loading #{directory}/#{load_from}..."
         raise "Yaml is nil" unless yml
-        @master_players, @rooms, @default_room, @items= yml
+        @master_players, @rooms, @items, @mobiles, @default_room= yml
         @rooms.each_pair { |n,r| r.on_load }
         @master_players.each_pair { |n,p| p.on_load }
         puts "Loaded Game."
@@ -88,7 +88,7 @@ module Mud
     # Save the state. This saves data in the same format the load_state reads. TODO - Make it not save the connections
     def dump_state
       f = File.new(File.join(File.dirname(File.expand_path(__FILE__)),"..","saves","#{Time.now.strftime("%Y_%m_%d_%H_%M")}.yaml"),"w")
-      f << YAML.dump([@master_players, @rooms, @items, @default_room])
+      f << YAML.dump([@master_players, @rooms, @items, @mobiles, @default_room])
       f.close
       puts "Saved game."
     end
