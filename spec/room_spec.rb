@@ -2,6 +2,13 @@ require 'migrator'
 
 module Mud
   describe Room do
+
+
+
+
+
+
+
     before(:all) do
       W.initialize_state
       @r  = Room.new(:test, "test_name", "this is the test room")
@@ -17,18 +24,18 @@ module Mud
         @r.exits_string.should == "There are no exits."
       end
 
-      it "should be able to add a texture, and use either short or long names" do
+      it "should be able to add a exit, and use either short or long names" do
         @r.dig('north',:test2)
         @r.has_exit?('n').should be true
-        @r.dest('n').should == @r2
-        @r.dest('north').should == @r2
+        @r.dest('n').should be @r2
+        @r.dest('north').should be @r2
         @r.exits_string.should == "You see an exit to the north."
       end
 
       it "should be able to overwrite old exits" do
         @r.dig('north',:test3)
-        @r.dest('n').should == @r3
-        @r.dest('north').should == @r3
+        @r.dest('n').should be @r3
+        @r.dest('north').should be @r3
         @r.exits_string.should == "You see an exit to the north."
       end
 

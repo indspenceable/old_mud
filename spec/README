@@ -1,0 +1,36 @@
+# Features for release - 
+##World
+The role of the world is to house the persistant state of the mud.
+
+- Should be able to check if a player is online, or a player exists, by id, or return nil if nonexistant (or not online, as the case dictates)
+- Should be able to retrieve a mobile by id (or nil, if nonexistant)
+- Should be able to get an item by id (or nil, blah blah)
+- On giving it an ID, you should be able to get the correct thing (Player, Mobile, or Item)
+- It should be able to save a gamestate and load a gamestate (All to YAML)
+- It should be able to progress the gamestate by any number of ticks (miliseconds)
+- It should be able to delete anything referred to by an identifier.
+- It should have a default room (you shoud not be able to delete this room, also) which throws an error if you try to access it without it existing.
+
+#Rooms
+Rooms have exits, players, mobiles, and items. You should be able to see and manipulate those exits.
+
+- Rooms should have exits, and whenever you access any of these methods it sould be able to normalize exit names
+- You should be able to check if there is an exit, in a given direction
+- You should be able to ask for the destination for a direction
+    - If there is one, it should return the correct exit
+    - If there is none, it should return nil
+- You should be able to set the destination, for a direction
+    - This will create an exit if it doesn't aleady exist,
+    - or overwrite an exit if it already exists
+
+#Entity
+Entities are the baseclass for Mobiles and Players - they encapsulate all shared behavior
+
+- TODO - add more here.
+
+#Players
+Players have 3 parts - class Player, Identifier.player(), and HasPlayers
+
+- A new player should be created with a name, and a password; it should be placed in the default room, it should be registered with the world (there might be more added to this later.
+- A player should be able to preprocess commands (turn 'hello into "say hello")
+- A player should be able to do whatever an entity can do

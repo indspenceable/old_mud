@@ -1,4 +1,5 @@
 require 'migrator'
+require 'rspec/mocks'
 
 module Mud
   module Entities
@@ -7,7 +8,8 @@ module Mud
         before(:all) do
           W.initialize_state
           (@o = Object.new).extend(HasMobiles)
-          @mock_mobile = Mobile.new
+          puts RSpec::Mocks.methods.sort.inspect
+          @mock_mobile = RSpec::Mocks::mock('mobile')
         end
         it "should start with no mobs" do
           @o.mobiles.size.should be 0
